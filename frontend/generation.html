@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Where Colors Dream | Story Generation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600;1,700&family=Lora:ital,wght@1,400;1,600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">Where Colors Dream</span>
+        <span class="brand-note">gentle stories for brave little hearts</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="#details">Details</a>
+        <a href="personalization.html">Next</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="subpage-hero">
+        <div class="grain-overlay" aria-hidden="true"></div>
+        <svg class="float-object orb orb-two" viewBox="0 0 140 140" aria-hidden="true">
+          <circle cx="70" cy="70" r="58"></circle>
+          <path d="M38 70c18-26 47-31 67-8"></path>
+          <path d="M43 84c18 17 43 19 57 2"></path>
+          <path d="M55 45c13 12 14 42-3 53"></path>
+        </svg>
+        <div class="page-width subpage-inner">
+          <div class="subpage-copy">
+            <p class="eyebrow">the feeling becomes the arc, not just the topic</p>
+            <h1>Story Generation</h1>
+            <p class="hero-tagline">A real fear is transformed into a magical adventure with a clear beginning, middle, and end. The emotional truth stays intact while the story offers safety, wonder, and forward motion.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="personalization.html">Continue to personalization</a>
+              <a class="button button-secondary" href="input.html">Back to input</a>
+            </div>
+          </div>
+          <div class="mini-illustration">
+            <svg viewBox="0 0 320 320" role="img" aria-label="A path from a cloud to a star illustration">
+              <path d="M48 216c40-67 99-112 168-123 22-3 42-2 56 8 19 13 15 38-11 54-24 15-54 22-73 41-19 18-29 42-33 69" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linecap="round"></path>
+              <circle cx="95" cy="179" r="48" fill="rgba(242, 196, 206, 0.78)" stroke="#2A2118" stroke-width="1.5"></circle>
+              <path d="M214 92 228 78l14 14 18 4-10 15 4 18-17-8-17 8 4-18-10-15z" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-section page-width" id="details">
+        <div class="section-rule" aria-hidden="true"></div>
+        <div class="section-heading">
+          <p class="eyebrow">reframing engine</p>
+          <h2>Magical structure with emotional honesty</h2>
+        </div>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">live generation</p>
+            <h3>Create a story from the backend</h3>
+            <p>Share the bedtime worry, choose a tone, and the frontend will call the FastAPI story generator and carry the returned storybook into the reading experience.</p>
+            <p class="generator-note">Backend default: <code>http://127.0.0.1:8000</code>. You can override it by setting <code>window.STORY_API_BASE</code> before this script runs.</p>
+          </div>
+          <form class="story-generator-form" id="story-generator-form">
+            <label>
+              <span>Child name</span>
+              <input id="child-name" name="child_name" type="text" placeholder="Mira" maxlength="60">
+            </label>
+            <label class="story-generator-field-full">
+              <span>Fear, feeling, or story seed</span>
+              <textarea id="story-prompt" name="prompt" rows="6" placeholder="She gets scared when the house creaks at night and worries something is hiding in the hallway." required></textarea>
+            </label>
+            <label>
+              <span>Tone</span>
+              <select id="story-tone" name="tone">
+                <option value="gentle">Gentle</option>
+                <option value="fun">Fun</option>
+                <option value="adventurous">Adventurous</option>
+              </select>
+            </label>
+            <label>
+              <span>Pages</span>
+              <select id="story-pages" name="num_pages">
+                <option value="4">4 pages</option>
+                <option value="5" selected>5 pages</option>
+                <option value="6">6 pages</option>
+                <option value="7">7 pages</option>
+                <option value="8">8 pages</option>
+              </select>
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" id="story-submit-button" type="submit">Create Storybook</button>
+              <a class="button button-secondary" href="storybook.html">Open storybook page</a>
+            </div>
+            <p class="story-generator-status" id="story-generator-status" aria-live="polite">Ready to generate a storybook.</p>
+          </form>
+        </div>
+        <div class="detail-grid">
+          <article class="detail-card">
+            <h3>Real to Magical</h3>
+            <p>The app keeps the recognizable fear but places it in a softer symbolic world a child can move through with curiosity.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Fear to Positive Reframing</h3>
+            <p>The resolution never denies the feeling. It acknowledges it, comforts it, and helps the child imagine agency.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Structured Storytelling</h3>
+            <p>Each story is shaped with a beginning, middle, and end so the emotional journey feels complete and repeatable.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Tone Modes</h3>
+            <p>Gentle, fun, or adventurous modes let the same fear take on different energy depending on the child and the moment.</p>
+          </article>
+        </div>
+
+        <div class="story-flow">
+          <article class="flow-step">
+            <span class="step-index">01</span>
+            <h3>Acknowledge</h3>
+            <p>The fear is named in language that feels validating.</p>
+          </article>
+          <article class="flow-step">
+            <span class="step-index">02</span>
+            <h3>Reframe</h3>
+            <p>The challenge becomes a story challenge, not a dead end.</p>
+          </article>
+          <article class="flow-step">
+            <span class="step-index">03</span>
+            <h3>Reinforce</h3>
+            <p>Comfort and positive reinforcement close the arc with warmth.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="quote-band">
+        <div class="page-width quote-layout">
+          <div>
+            <p class="eyebrow eyebrow-invert">emotional layer</p>
+            <h2>Children do not need fear erased. They need it held differently.</h2>
+          </div>
+          <div class="quote-copy">
+            <p>This page represents fear acknowledgment, comfort messaging, and positive reinforcement as part of the storytelling system rather than separate add-ons.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="contact page-width">
+        <div class="section-heading section-heading-centered">
+          <p class="eyebrow">browse pages</p>
+          <h2>Move deeper into the product</h2>
+        </div>
+        <div class="page-links">
+          <a class="page-link-row" href="personalization.html"><span>Next</span><span aria-hidden="true"></span><strong>Personalization for names, avatars, pronouns, and preferences</strong></a>
+          <a class="page-link-row" href="experience.html"><span>Related</span><span aria-hidden="true"></span><strong>Experience modes for bedtime and theme changes</strong></a>
+          <a class="page-link-row" href="input.html"><span>Back</span><span aria-hidden="true"></span><strong>Return to the input page</strong></a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js" defer></script>
+  <script src="story-integration.js" defer></script>
+</body>
+</html>

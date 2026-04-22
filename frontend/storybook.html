@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Where Colors Dream | Storybook UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600;1,700&family=Lora:ital,wght@1,400;1,600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">Where Colors Dream</span>
+        <span class="brand-note">gentle stories for brave little hearts</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="#details">Details</a>
+        <a href="audio.html">Next</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="subpage-hero">
+        <div class="grain-overlay" aria-hidden="true"></div>
+        <div class="page-width subpage-inner">
+          <div class="subpage-copy">
+            <p class="eyebrow">a storybook interface designed for small hands and sleepy eyes</p>
+            <h1>Storybook UI</h1>
+            <p class="hero-tagline">The story unfolds page by page with clear illustrated scenes, tap or swipe navigation, highlighted narration text, and big calm controls that never interrupt the mood.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="audio.html">Continue to audio</a>
+              <a class="button button-secondary" href="personalization.html">Back to personalization</a>
+            </div>
+          </div>
+          <div class="mini-illustration">
+            <svg viewBox="0 0 320 320" role="img" aria-label="An open storybook illustration">
+              <path d="M48 94c0-18 12-30 31-30h68c23 0 38 9 48 24 10-15 25-24 48-24h18c19 0 31 12 31 30v132c0 19-12 31-31 31h-18c-23 0-38 9-48 24-10-15-25-24-48-24H79c-19 0-31-12-31-31z" fill="rgba(243, 237, 228, 0.95)" stroke="#2A2118" stroke-width="1.5" stroke-linejoin="round"></path>
+              <path d="M160 88v150" fill="none" stroke="#2A2118" stroke-width="1.5"></path>
+              <path d="M80 120h48M80 144h54M80 168h40" fill="none" stroke="#C4B8AE" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M191 117c14-20 46-20 60 0-14 20-46 20-60 0z" fill="rgba(184, 228, 220, 0.85)" stroke="#2A2118" stroke-width="1.5"></path>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-section page-width" id="details">
+        <div class="section-rule" aria-hidden="true"></div>
+        <div class="section-heading">
+          <p class="eyebrow">reading flow</p>
+          <h2>Simple enough for children, expressive enough for wonder</h2>
+        </div>
+        <section class="storybook-summary" id="storybook-summary" aria-live="polite">
+          <div>
+            <p class="eyebrow">current story</p>
+            <h3 id="storybook-title">Demo storybook</h3>
+            <p class="storybook-summary-copy" id="storybook-summary-copy">Open a generated story from the previous page to replace the demo content with live backend output.</p>
+          </div>
+          <dl class="storybook-meta" id="storybook-meta">
+            <div>
+              <dt>Child</dt>
+              <dd id="storybook-child">Not set</dd>
+            </div>
+            <div>
+              <dt>Tone</dt>
+              <dd id="storybook-tone">Gentle</dd>
+            </div>
+            <div>
+              <dt>Pages</dt>
+              <dd id="storybook-pages">6</dd>
+            </div>
+          </dl>
+        </section>
+        <div id="storybook-root" aria-live="polite"></div>
+        <div class="detail-grid">
+          <article class="detail-card">
+            <h3>Page-by-page Story</h3>
+            <p>The story feels like a real book, with each page carrying a clean chunk of narrative and illustration.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Illustrations per Page</h3>
+            <p>Every page gets its own visual moment so the child can pause, notice details, and feel oriented.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Swipe / Tap Navigation</h3>
+            <p>Movement stays intuitive on touch devices and still works with large forward and back controls.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Highlighted Text Narration</h3>
+            <p>Words can glow into focus as narration plays, helping the story feel immersive and readable at once.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Simple UI</h3>
+            <p>Big buttons and quiet hierarchy keep interaction easy for children without adding clutter.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Engagement</h3>
+            <p>Stars, completion badges, and unlockable stories encourage return visits without overpowering the emotional purpose.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="quote-band">
+        <div class="page-width quote-layout">
+          <div>
+            <p class="eyebrow eyebrow-invert">product principle</p>
+            <h2>The interface should disappear into the ritual of reading.</h2>
+          </div>
+          <div class="quote-copy">
+            <p>This page is where the design system matters most: it turns a functional app state into something that feels like a held object, a little book, a repeated comfort.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="contact page-width">
+        <div class="section-heading section-heading-centered">
+          <p class="eyebrow">browse pages</p>
+          <h2>Continue the reading experience</h2>
+        </div>
+        <div class="page-links">
+          <a class="page-link-row" href="audio.html"><span>Next</span><span aria-hidden="true"></span><strong>Audio narration, music, and sound design</strong></a>
+          <a class="page-link-row" href="library.html"><span>Then</span><span aria-hidden="true"></span><strong>Save, favorite, and revisit stories</strong></a>
+          <a class="page-link-row" href="personalization.html"><span>Back</span><span aria-hidden="true"></span><strong>Return to personalization</strong></a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js" defer></script>
+  <script src="story-integration.js" defer></script>
+  <script src="storybook-component.js" defer></script>
+</body>
+</html>
