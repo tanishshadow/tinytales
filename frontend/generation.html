@@ -63,7 +63,7 @@
             <p class="eyebrow">live generation</p>
             <h3>Create a story from the backend</h3>
             <p>Share the bedtime worry, choose a tone, and the frontend will call the FastAPI story generator and carry the returned storybook into the reading experience.</p>
-            <p class="generator-note">Backend base URL: <code>https://tinytales-2f38.onrender.com</code>.</p>
+            <p class="generator-note">Backend base URL: <code id="api-base-url"></code>.</p>
           </div>
           <form class="story-generator-form" id="story-generator-form">
             <label>
@@ -163,6 +163,7 @@
     </main>
   </div>
   <script src="app.js" defer></script>
+  <script src="api-config.js" defer></script>
   <script src="story-integration.js" defer></script>
 </body>
 </html>

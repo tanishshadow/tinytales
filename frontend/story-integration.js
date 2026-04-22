@@ -1,5 +1,4 @@
 (function () {
-  const API_BASE = "https://tinytales-2f38.onrender.com";
   const STORAGE_KEY = "tiny.latestStorybook";
 
   function saveStorybook(storybook) {
@@ -28,6 +27,10 @@
     element.dataset.state = tone || "idle";
   }
 
+  function getApiBase() {
+    return String(window.API_BASE || "");
+  }
+
   async function generateStorybook(form) {
     const status = document.getElementById("story-generator-status");
     const submitButton = document.getElementById("story-submit-button");
@@ -44,12 +47,13 @@
       formData.set("child_name", "the little one");
     }
 
+    const apiBase = getApiBase();
     submitButton.disabled = true;
     form.dataset.busy = "true";
     setStatus(status, "Generating storybook from the backend...", "loading");
 
     try {
-      const response = await fetch(`${API_BASE}/api/generate`, {
+      const response = await fetch(`${apiBase}/api/generate`, {
         method: "POST",
         body: formData,
       });
@@ -94,8 +98,9 @@
       return null;
     }
 
+    const apiBase = getApiBase();
     const response = await fetch(
-      `${API_BASE}/api/storybook/${encodeURIComponent(storybookId)}`
+      `${apiBase}/api/storybook/${encodeURIComponent(storybookId)}`
     );
 
     if (!response.ok) {
@@ -170,6 +175,12 @@
 
   function setupGenerationPage() {
     const form = document.getElementById("story-generator-form");
+    const apiBaseLabel = document.getElementById("api-base-url");
+
+    if (apiBaseLabel) {
+      apiBaseLabel.textContent = getApiBase();
+    }
+
     if (!form) {
       return;
     }
