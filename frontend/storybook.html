@@ -80,6 +80,19 @@
           <button class="button button-secondary" id="storybook-export-button" type="button">Prepare printable export</button>
         </div>
         <p class="story-generator-status" id="storybook-action-status" aria-live="polite"></p>
+        <section class="story-audio-panel" aria-labelledby="storybook-audio-title">
+          <div class="story-audio-copy">
+            <p class="eyebrow">listen mode</p>
+            <h3 id="storybook-audio-title">Hear the story out loud</h3>
+            <p class="storybook-summary-copy">Playback uses the browser voice on this device and follows the saved narration style as closely as possible.</p>
+          </div>
+          <div class="story-generator-actions">
+            <button class="button button-primary" id="storybook-play-audio-button" type="button">Play audio</button>
+            <button class="button button-secondary" id="storybook-pause-audio-button" type="button" disabled>Pause</button>
+            <button class="button button-secondary" id="storybook-stop-audio-button" type="button" disabled>Stop</button>
+          </div>
+          <p class="story-generator-status" id="storybook-audio-status" aria-live="polite">Audio is ready when a story is available.</p>
+        </section>
         <div id="storybook-root" aria-live="polite"></div>
         <div class="detail-grid">
           <article class="detail-card">

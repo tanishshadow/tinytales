@@ -92,6 +92,19 @@
                 <option value="8">8 pages</option>
               </select>
             </label>
+            <section class="voice-input-panel story-generator-field-full" aria-labelledby="voice-input-title">
+              <div class="voice-input-copy">
+                <span class="voice-input-label">Voice input</span>
+                <h4 id="voice-input-title">Speak the worry instead of typing it</h4>
+                <p>Use your microphone and we will place the spoken words into the story prompt for you. This works well for moments like a doctor visit, bedtime fear, or a quick note on the go.</p>
+              </div>
+              <div class="voice-input-actions">
+                <button class="button button-secondary" id="voice-start-button" type="button">Start voice input</button>
+                <button class="button button-secondary" id="voice-stop-button" type="button" disabled>Stop</button>
+                <button class="button button-secondary" id="voice-clear-button" type="button">Clear added voice text</button>
+              </div>
+              <p class="story-generator-status" id="voice-input-status" aria-live="polite">Voice input is ready.</p>
+            </section>
             <div class="story-generator-actions story-generator-field-full">
               <button class="button button-primary" id="story-submit-button" type="submit">Create Storybook</button>
               <a class="button button-secondary" href="storybook.html">Open storybook page</a>

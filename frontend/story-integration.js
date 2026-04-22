@@ -452,6 +452,151 @@
     });
   }
 
+  function setupGenerationVoiceInput() {
+    const promptField = document.getElementById("story-prompt");
+    const startButton = document.getElementById("voice-start-button");
+    const stopButton = document.getElementById("voice-stop-button");
+    const clearButton = document.getElementById("voice-clear-button");
+    const status = document.getElementById("voice-input-status");
+
+    if (!promptField || !startButton || !stopButton || !clearButton || !status) {
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+    let recognition = null;
+    let sessionBasePrompt = "";
+    let finalTranscript = "";
+    let isListening = false;
+    let hasVoiceDraft = false;
+
+    function setListeningState(listening) {
+      isListening = listening;
+      startButton.disabled = listening;
+      stopButton.disabled = !listening;
+    }
+
+    function mergePrompt(basePrompt, transcript) {
+      const cleanBase = String(basePrompt || "").trim();
+      const cleanTranscript = String(transcript || "").trim();
+      if (!cleanTranscript) {
+        return cleanBase;
+      }
+      if (!cleanBase) {
+        return cleanTranscript;
+      }
+      return cleanBase + "\n\n" + cleanTranscript;
+    }
+
+    function updatePrompt(interimTranscript) {
+      promptField.value = mergePrompt(
+        sessionBasePrompt,
+        [finalTranscript, interimTranscript].filter(Boolean).join(" ").trim()
+      );
+    }
+
+    if (!SpeechRecognition) {
+      startButton.disabled = true;
+      stopButton.disabled = true;
+      setStatus(
+        status,
+        "Voice typing needs Chrome or Edge on this device.",
+        "idle"
+      );
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = navigator.language || "en-US";
+
+    recognition.onstart = function () {
+      setListeningState(true);
+      setStatus(
+        status,
+        "Listening now. Speak naturally and we will place it into the story prompt.",
+        "loading"
+      );
+    };
+
+    recognition.onresult = function (event) {
+      let interimTranscript = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const transcript = result[0] ? result[0].transcript : "";
+        if (result.isFinal) {
+          finalTranscript = [finalTranscript, transcript].filter(Boolean).join(" ").trim();
+        } else {
+          interimTranscript += transcript + " ";
+        }
+      }
+      updatePrompt(interimTranscript.trim());
+    };
+
+    recognition.onerror = function (event) {
+      setListeningState(false);
+      if (event.error === "not-allowed") {
+        setStatus(status, "Microphone permission was blocked.", "error");
+        return;
+      }
+      if (event.error === "no-speech") {
+        setStatus(status, "No speech was heard. Try again a little closer to the mic.", "error");
+        return;
+      }
+      setStatus(status, "Voice input stopped: " + event.error + ".", "error");
+    };
+
+    recognition.onend = function () {
+      setListeningState(false);
+      if (finalTranscript.trim()) {
+        promptField.value = mergePrompt(sessionBasePrompt, finalTranscript);
+        hasVoiceDraft = true;
+        setStatus(status, "Voice text added to the story prompt.", "success");
+      } else {
+        promptField.value = sessionBasePrompt;
+        setStatus(status, "Voice input stopped. No words were captured this time.", "idle");
+      }
+    };
+
+    startButton.addEventListener("click", function () {
+      sessionBasePrompt = promptField.value.trim();
+      finalTranscript = "";
+      hasVoiceDraft = false;
+      setListeningState(true);
+      try {
+        recognition.start();
+      } catch (error) {
+        setListeningState(false);
+        setStatus(status, "Voice input is already starting. Give it a second.", "idle");
+      }
+    });
+
+    stopButton.addEventListener("click", function () {
+      if (!isListening) {
+        return;
+      }
+      recognition.stop();
+      setStatus(status, "Finishing the voice note...", "loading");
+    });
+
+    clearButton.addEventListener("click", function () {
+      if (isListening) {
+        recognition.stop();
+      }
+      if (!hasVoiceDraft && !finalTranscript.trim()) {
+        setStatus(status, "There is no added voice text to clear.", "idle");
+        return;
+      }
+      finalTranscript = "";
+      promptField.value = sessionBasePrompt;
+      hasVoiceDraft = false;
+      setStatus(status, "Voice-added text cleared from the prompt.", "success");
+    });
+  }
+
   function setupInputPage() {
     const form = document.getElementById("input-preferences-form");
     if (!form) {
@@ -879,6 +1024,313 @@
     };
   }
 
+  function setupStorybookAudio(storybook) {
+    const playButton = document.getElementById("storybook-play-audio-button");
+    const pauseButton = document.getElementById("storybook-pause-audio-button");
+    const stopButton = document.getElementById("storybook-stop-audio-button");
+    const status = document.getElementById("storybook-audio-status");
+
+    if (!playButton || !pauseButton || !stopButton || !status) {
+      return;
+    }
+
+    if (!("speechSynthesis" in window) || typeof window.SpeechSynthesisUtterance !== "function") {
+      playButton.disabled = true;
+      pauseButton.disabled = true;
+      stopButton.disabled = true;
+      setStatus(status, "Audio playback needs a browser with built-in speech support.", "idle");
+      return;
+    }
+
+    if (!window.storyAudioController) {
+      window.storyAudioController = {
+        storybook: null,
+        audioSettings: null,
+        experienceSettings: null,
+        pageIndex: 0,
+        speaking: false,
+        paused: false,
+        utterance: null,
+        autoPlayAttempted: false,
+      };
+    }
+
+    const controller = window.storyAudioController;
+    const previousStoryId =
+      controller.storybook && controller.storybook.id ? controller.storybook.id : null;
+    controller.storybook = storybook || null;
+    const nextStoryId =
+      controller.storybook && controller.storybook.id ? controller.storybook.id : null;
+    if (previousStoryId !== nextStoryId) {
+      controller.autoPlayAttempted = false;
+      window.speechSynthesis.cancel();
+      controller.speaking = false;
+      controller.paused = false;
+      controller.utterance = null;
+      controller.pageIndex = 0;
+    }
+
+    function setButtonState() {
+      const hasStory =
+        controller.storybook &&
+        Array.isArray(controller.storybook.pages) &&
+        controller.storybook.pages.length > 0;
+      playButton.disabled = !hasStory;
+      pauseButton.disabled = !hasStory || (!controller.speaking && !controller.paused);
+      stopButton.disabled = !hasStory || (!controller.speaking && !controller.paused);
+      pauseButton.textContent = controller.paused ? "Resume" : "Pause";
+    }
+
+    function stopPlayback(message, tone) {
+      window.speechSynthesis.cancel();
+      controller.speaking = false;
+      controller.paused = false;
+      controller.utterance = null;
+      controller.pageIndex = 0;
+      setButtonState();
+      if (message) {
+        setStatus(status, message, tone || "idle");
+      }
+    }
+
+    function getPages() {
+      return controller.storybook && Array.isArray(controller.storybook.pages)
+        ? controller.storybook.pages
+        : [];
+    }
+
+    function getCurrentSpreadIndex() {
+      if (
+        window.storybookComponent &&
+        typeof window.storybookComponent.getSpreadIndex === "function"
+      ) {
+        return window.storybookComponent.getSpreadIndex();
+      }
+      return 0;
+    }
+
+    function goToPage(pageIndex) {
+      if (
+        window.storybookComponent &&
+        typeof window.storybookComponent.goToSpread === "function"
+      ) {
+        window.storybookComponent.goToSpread(Math.floor(pageIndex / 2));
+      }
+    }
+
+    function narratorKeywords(narratorVoice) {
+      if (narratorVoice === "whisper") {
+        return ["whisper", "soft", "zira"];
+      }
+      if (narratorVoice === "playful") {
+        return ["play", "joy", "aria", "samantha"];
+      }
+      if (narratorVoice === "adventurous") {
+        return ["david", "guy", "mark", "ryan"];
+      }
+      return ["gentle", "soft", "zira", "aria", "samantha"];
+    }
+
+    function pickVoice(audioSettings) {
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices.length) {
+        return null;
+      }
+      const keywords = narratorKeywords(
+        audioSettings && audioSettings.narrator_voice
+          ? audioSettings.narrator_voice
+          : "gentle"
+      );
+      const exactMatch = voices.find(function (voice) {
+        const haystack = (voice.name + " " + voice.lang).toLowerCase();
+        return keywords.some(function (keyword) {
+          return haystack.indexOf(keyword) !== -1;
+        });
+      });
+      return exactMatch || voices.find(function (voice) {
+        return String(voice.lang || "").toLowerCase().indexOf("en") === 0;
+      }) || voices[0];
+    }
+
+    function getPageSpeech(page) {
+      const chapter = page && page.mood ? page.mood : page && page.chapterLabel;
+      const lead = chapter ? chapter + ". " : "";
+      const body = page && page.text ? String(page.text).trim() : "";
+      return (lead + body).trim();
+    }
+
+    function refreshAudioPreferences() {
+      return Promise.all([
+        fetchPreference("/api/preferences/audio").catch(function () {
+          return null;
+        }),
+        fetchPreference("/api/preferences/experience").catch(function () {
+          return null;
+        }),
+      ]).then(function (results) {
+        controller.audioSettings = results[0];
+        controller.experienceSettings = results[1];
+        return results;
+      });
+    }
+
+    function speakPage(pageIndex) {
+      const pages = getPages();
+      if (!pages.length) {
+        stopPlayback("There is no story loaded yet.", "idle");
+        return;
+      }
+
+      if (pageIndex >= pages.length) {
+        stopPlayback("Story audio finished.", "success");
+        return;
+      }
+
+      const page = pages[pageIndex];
+      const text = getPageSpeech(page);
+
+      if (!text) {
+        speakPage(pageIndex + 1);
+        return;
+      }
+
+      controller.pageIndex = pageIndex;
+      controller.speaking = true;
+      controller.paused = false;
+      setButtonState();
+      goToPage(pageIndex);
+
+      const utterance = new window.SpeechSynthesisUtterance(text);
+      const audioSettings = controller.audioSettings || {};
+      const selectedVoice = pickVoice(audioSettings);
+      utterance.rate =
+        typeof audioSettings.playback_speed === "number"
+          ? audioSettings.playback_speed
+          : 1;
+      utterance.pitch =
+        audioSettings.narrator_voice === "playful"
+          ? 1.08
+          : audioSettings.narrator_voice === "whisper"
+            ? 0.92
+            : 1;
+      utterance.volume = 1;
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice.lang;
+      }
+
+      utterance.onstart = function () {
+        const pageNumber = page.page_number || page.pageNumber || pageIndex + 1;
+        setStatus(status, "Reading page " + pageNumber + " aloud.", "loading");
+      };
+
+      utterance.onend = function () {
+        if (!controller.speaking || controller.paused) {
+          return;
+        }
+        speakPage(pageIndex + 1);
+      };
+
+      utterance.onerror = function () {
+        stopPlayback("Audio playback stopped unexpectedly.", "error");
+      };
+
+      controller.utterance = utterance;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+
+    playButton.onclick = function () {
+      if (!getPages().length) {
+        setStatus(status, "Generate a story first, then audio can read it aloud.", "idle");
+        return;
+      }
+
+      if (controller.paused && window.speechSynthesis.paused) {
+        controller.paused = false;
+        controller.speaking = true;
+        window.speechSynthesis.resume();
+        setButtonState();
+        setStatus(status, "Audio resumed.", "success");
+        return;
+      }
+
+      controller.pageIndex = getCurrentSpreadIndex() * 2;
+      refreshAudioPreferences().then(function () {
+        speakPage(controller.pageIndex);
+      });
+    };
+
+    pauseButton.onclick = function () {
+      if (!controller.speaking && !controller.paused) {
+        return;
+      }
+      if (controller.paused) {
+        controller.paused = false;
+        controller.speaking = true;
+        window.speechSynthesis.resume();
+        setStatus(status, "Audio resumed.", "success");
+      } else {
+        controller.paused = true;
+        controller.speaking = false;
+        window.speechSynthesis.pause();
+        setStatus(status, "Audio paused.", "idle");
+      }
+      setButtonState();
+    };
+
+    stopButton.onclick = function () {
+      stopPlayback("Audio stopped.", "idle");
+    };
+
+    window.onStoryFlipComplete = function (event) {
+      if (!controller.speaking && !controller.paused && event) {
+        controller.pageIndex = (event.spreadIndex || 0) * 2;
+      }
+    };
+
+    window.addEventListener(
+      "beforeunload",
+      function () {
+        window.speechSynthesis.cancel();
+      },
+      { once: true }
+    );
+
+    refreshAudioPreferences()
+      .then(function () {
+        const shouldAutoPlay =
+          controller.audioSettings &&
+          controller.audioSettings.narration_enabled &&
+          controller.experienceSettings &&
+          controller.experienceSettings.auto_play_audio;
+        setButtonState();
+        if (
+          shouldAutoPlay &&
+          controller.storybook &&
+          !controller.autoPlayAttempted
+        ) {
+          controller.autoPlayAttempted = true;
+          controller.pageIndex = getCurrentSpreadIndex() * 2;
+          speakPage(controller.pageIndex);
+        } else if (controller.storybook) {
+          setStatus(status, "Audio is ready for this story.", "idle");
+        } else {
+          setStatus(status, "Audio is ready when a story is available.", "idle");
+        }
+      })
+      .catch(function () {
+        setButtonState();
+        setStatus(status, "Audio is ready for manual playback.", "idle");
+      });
+
+    if (typeof window.speechSynthesis.onvoiceschanged !== "undefined") {
+      window.speechSynthesis.onvoiceschanged = function () {
+        setButtonState();
+      };
+    }
+  }
+
   function setupStorybookPage() {
     const summary = document.getElementById("storybook-summary");
     if (!summary) {
@@ -895,9 +1347,11 @@
       applyStorybookSummary(cachedStory, cachedMatchesRequest);
       applyStorybookPages(cachedStory);
       setupStorybookActions(cachedStory);
+      setupStorybookAudio(cachedStory);
     } else {
       applyStorybookSummary(null, false);
       setupStorybookActions(null);
+      setupStorybookAudio(null);
     }
 
     if (!requestedId || cachedMatchesRequest) {
@@ -909,6 +1363,7 @@
         applyStorybookSummary(storybook, true);
         applyStorybookPages(storybook);
         setupStorybookActions(storybook);
+        setupStorybookAudio(storybook);
       })
       .catch(function (error) {
         const copyElement = document.getElementById("storybook-summary-copy");
@@ -960,6 +1415,7 @@
 
   function init() {
     setupGenerationPage();
+    setupGenerationVoiceInput();
     setupInputPage();
     setupPersonalizationPage();
     setupAudioPage();

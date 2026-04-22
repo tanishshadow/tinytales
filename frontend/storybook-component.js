@@ -1189,6 +1189,20 @@
         rootElement.removeEventListener("touchend", onTouchEnd);
         win.removeEventListener("keydown", onKeyDown);
       },
+      getSpreadIndex: function () {
+        return state.spreadIndex;
+      },
+      goToSpread: function (spreadIndex) {
+        const clampedIndex = Math.max(
+          0,
+          Math.min(Math.ceil(pages.length / 2) - 1, Number(spreadIndex) || 0)
+        );
+        clearTimers();
+        state.isFlipping = false;
+        state.flipDirection = null;
+        state.spreadIndex = clampedIndex;
+        rerender(null);
+      },
       goNext: function () {
         startFlip("forward");
       },
