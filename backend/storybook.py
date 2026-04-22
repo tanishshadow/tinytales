@@ -74,6 +74,19 @@ class ParentControls(BaseModel):
     notes: str = ""
 
 
+class StoryGenerationCacheEntry(BaseModel):
+    request_cache_key: str
+    title: str
+    child_name: str
+    original_prompt: str
+    tone: str = "gentle"
+    num_pages: int = 0
+    pages: list[StoryPage] = Field(default_factory=list)
+    created_at: str = Field(default_factory=utc_now_iso)
+    last_used_at: str = Field(default_factory=utc_now_iso)
+    hit_count: int = 0
+
+
 class Storybook(BaseModel):
     id: str
     title: str
@@ -90,6 +103,8 @@ class Storybook(BaseModel):
     audio_settings: AudioSettings = Field(default_factory=AudioSettings)
     experience_settings: ExperienceSettings = Field(default_factory=ExperienceSettings)
     parent_controls: ParentControls = Field(default_factory=ParentControls)
+    request_cache_key: str = ""
+    generation_source: str = "gemini"
 
     def to_dict(self) -> dict[str, Any]:
         return self.model_dump()
@@ -115,6 +130,7 @@ class AppState(BaseModel):
     audio_settings: AudioSettings = Field(default_factory=AudioSettings)
     experience_settings: ExperienceSettings = Field(default_factory=ExperienceSettings)
     parent_controls: ParentControls = Field(default_factory=ParentControls)
+    generation_cache: dict[str, StoryGenerationCacheEntry] = Field(default_factory=dict)
 
 
 class StorybookStore:
@@ -128,6 +144,7 @@ class StorybookStore:
         self._lock = threading.Lock()
         self._state = self._load_state()
         self._books = {book.id: book for book in self._state.stories}
+        self._generation_cache = dict(self._state.generation_cache)
 
     def _load_state(self) -> AppState:
         if not self._data_path.exists():
@@ -145,7 +162,8 @@ class StorybookStore:
                     self._books.values(),
                     key=lambda book: book.created_at,
                     reverse=True,
-                )
+                ),
+                "generation_cache": self._generation_cache,
             }
         )
         self._data_path.write_text(
@@ -259,6 +277,32 @@ class StorybookStore:
             self._state.parent_controls = payload
             self._persist_locked()
             return self._state.parent_controls
+
+    def get_cached_generation(self, request_cache_key: str) -> Optional[StoryGenerationCacheEntry]:
+        with self._lock:
+            cached = self._generation_cache.get(request_cache_key)
+            if cached is None:
+                return None
+            updated = cached.model_copy(
+                update={
+                    "last_used_at": utc_now_iso(),
+                    "hit_count": cached.hit_count + 1,
+                }
+            )
+            self._generation_cache[request_cache_key] = updated
+            self._persist_locked()
+            return updated
+
+    def save_cached_generation(self, payload: StoryGenerationCacheEntry) -> StoryGenerationCacheEntry:
+        with self._lock:
+            entry = payload.model_copy(
+                update={
+                    "last_used_at": utc_now_iso(),
+                }
+            )
+            self._generation_cache[entry.request_cache_key] = entry
+            self._persist_locked()
+            return entry
 
     def dashboard(self) -> dict[str, Any]:
         stories = self.list_all()

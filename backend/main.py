@@ -8,9 +8,12 @@ load working state.
 
 from __future__ import annotations
 
+import hashlib
 import os
+import re
 from pathlib import Path
 from typing import Any, Optional
+from uuid import uuid4
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Form, HTTPException
@@ -26,6 +29,7 @@ from storybook import (
     ParentControls,
     PersonalizationProfile,
     StoryPage,
+    StoryGenerationCacheEntry,
     Storybook,
     StorybookStore,
 )
@@ -67,11 +71,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://tinytales-azure.vercel.app",
     ],
+    allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)?vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -104,6 +109,25 @@ def build_story_export_text(book: Storybook) -> str:
     ).strip()
 
 
+def normalize_cache_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value or "").strip()
+
+
+def build_generation_cache_key(
+    prompt: str,
+    child_name: str,
+    tone: str,
+    num_pages: int,
+) -> str:
+    normalized_parts = [
+        normalize_cache_text(prompt),
+        normalize_cache_text(child_name),
+        normalize_cache_text(tone).lower(),
+        str(int(num_pages)),
+    ]
+    return hashlib.sha256("||".join(normalized_parts).encode("utf-8")).hexdigest()
+
+
 @app.post("/api/generate")
 async def create_storybook(
     prompt: str = Form(..., description="The child's fear, worry, or story seed"),
@@ -114,28 +138,78 @@ async def create_storybook(
     if not GEMINI_API_KEY:
         raise HTTPException(503, "Gemini API key is not configured")
 
+    clean_prompt = normalize_cache_text(prompt)
+    if not clean_prompt:
+        raise HTTPException(422, "Prompt cannot be empty")
+
+    requested_child_name = normalize_cache_text(child_name or "the little one") or "the little one"
+    requested_tone = normalize_cache_text(tone or "gentle").lower() or "gentle"
+    requested_num_pages = num_pages or 5
+    request_cache_key = build_generation_cache_key(
+        prompt=clean_prompt,
+        child_name=requested_child_name,
+        tone=requested_tone,
+        num_pages=requested_num_pages,
+    )
+
+    saved_profile = store.get_personalization()
+    resolved_child_name = saved_profile.child_name or requested_child_name
+    cached_generation = store.get_cached_generation(request_cache_key)
+
+    if cached_generation is not None:
+        book = Storybook(
+            id=uuid4().hex[:16],
+            title=cached_generation.title,
+            child_name=resolved_child_name,
+            original_prompt=clean_prompt,
+            tone=cached_generation.tone,
+            pages=cached_generation.pages,
+            input_preferences=store.get_input_preferences(),
+            personalization=saved_profile.model_copy(update={"child_name": resolved_child_name}),
+            audio_settings=store.get_audio_settings(),
+            experience_settings=store.get_experience_settings(),
+            parent_controls=store.get_parent_controls(),
+            request_cache_key=request_cache_key,
+            generation_source="cache",
+        )
+        store.save(book)
+        return JSONResponse(content=book.to_dict(), status_code=201)
+
     try:
         storybook_data = await generate_story(
-            prompt=prompt,
-            child_name=child_name or "the little one",
-            tone=tone or "gentle",
-            num_pages=num_pages or 5,
+            prompt=clean_prompt,
+            child_name=requested_child_name,
+            tone=requested_tone,
+            num_pages=requested_num_pages,
             gemini_api_key=GEMINI_API_KEY,
         )
     except Exception as exc:
         raise HTTPException(502, f"Story generation failed: {exc}")
 
-    saved_profile = store.get_personalization()
-    resolved_child_name = saved_profile.child_name or storybook_data["child_name"]
+    store.save_cached_generation(
+        StoryGenerationCacheEntry(
+            request_cache_key=request_cache_key,
+            title=storybook_data["title"],
+            child_name=storybook_data["child_name"],
+            original_prompt=clean_prompt,
+            tone=requested_tone,
+            num_pages=requested_num_pages,
+            pages=storybook_data["pages"],
+        )
+    )
 
     book = Storybook(
         **storybook_data,
         child_name=resolved_child_name,
+        original_prompt=clean_prompt,
+        tone=requested_tone,
         input_preferences=store.get_input_preferences(),
         personalization=saved_profile.model_copy(update={"child_name": resolved_child_name}),
         audio_settings=store.get_audio_settings(),
         experience_settings=store.get_experience_settings(),
         parent_controls=store.get_parent_controls(),
+        request_cache_key=request_cache_key,
+        generation_source="gemini",
     )
     store.save(book)
     return JSONResponse(content=book.to_dict(), status_code=201)
