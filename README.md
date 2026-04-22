@@ -21,6 +21,11 @@
 </p>
 
 <p align="center">
+  <a href="https://tinytales-azure.vercel.app/">Live Frontend</a> -
+  <a href="https://tinytales-2f38.onrender.com/docs">Live API Docs</a>
+</p>
+
+<p align="center">
   <a href="#overview">Overview</a> -
   <a href="#features">Features</a> -
   <a href="#quick-start">Quick Start</a> -
@@ -138,6 +143,12 @@ Cached generation data is stored separately from editable storybooks. That means
 | AI | Google Gemini via `google-genai` |
 | Persistence | Local JSON file store |
 | Deployment | Vercel frontend + Render backend |
+
+### Live deployment
+
+- Frontend: [tinytales-azure.vercel.app](https://tinytales-azure.vercel.app/)
+- Backend: [tinytales-2f38.onrender.com](https://tinytales-2f38.onrender.com/)
+- API Docs: [tinytales-2f38.onrender.com/docs](https://tinytales-2f38.onrender.com/docs)
 
 ---
 
@@ -286,12 +297,15 @@ The storybook page uses browser speech synthesis for play, pause, resume, and st
 
 - Designed to be served as static files
 - Works well on Vercel
+- Live frontend: [https://tinytales-azure.vercel.app/](https://tinytales-azure.vercel.app/)
 
 ### Backend
 
 - Designed for FastAPI deployment on Render
 - Includes CORS support for localhost and Vercel domains
 - `/api/health` can be used to warm the backend before generation
+- Live backend: [https://tinytales-2f38.onrender.com/](https://tinytales-2f38.onrender.com/)
+- Live docs: [https://tinytales-2f38.onrender.com/docs](https://tinytales-2f38.onrender.com/docs)
 
 ### If the frontend is still pointing to production
 
@@ -329,4 +343,6 @@ If you’re iterating on TinyTales, a good workflow is:
 
 ## License
 
-No license file is currently included in this repository. Add one before public distribution if you want reuse terms to be explicit.
+MIT License.
+
+If you add a `LICENSE` file to the repo, this section will match the project license directly.
