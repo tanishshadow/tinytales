@@ -51,6 +51,15 @@ svg * {
   pointer-events: none;
 }
 
+.feature svg,
+.hero-illustration,
+.mini-illustration svg,
+.orb,
+.mountains,
+.constellation-field svg {
+  pointer-events: none;
+}
+
 svg.svg-interactive,
 svg.svg-interactive *,
 .svg-interactive svg,
@@ -155,7 +164,7 @@ textarea {
   position: absolute;
   border-radius: 999px;
   pointer-events: none;
-  will-change: transform, opacity, filter;
+  will-change: transform;
 }
 
 .depth-node {
@@ -964,14 +973,9 @@ body.story-transition-active .site-shell {
   border-color: rgba(123, 207, 202, 0.65);
 }
 
-.motion-interactive,
-.magnetic-item,
-.micro-button,
-.parallax-scene,
 .parallax-layer,
-.ambient-breathe,
 .flip-ghost {
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 .magnetic-item,

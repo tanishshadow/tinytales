@@ -1458,6 +1458,7 @@
     }));
     let pointer = { x: 0.5, y: 0.5, active: false };
     let disposed = false;
+    let grainCanvas = null;
 
     function applyResize() {
       const dpr = Math.min(win.devicePixelRatio || 1, 2);
@@ -1505,15 +1506,11 @@
         ctx.fill();
       });
 
-      ctx.globalCompositeOperation = "soft-light";
-      for (let x = 0; x < width; x += 14) {
-        for (let y = 0; y < height; y += 14) {
-          const grain = ((Math.sin(x * 12.9898 + y * 78.233 + time * 0.02) * 43758.5453) % 1) * 0.06;
-          ctx.fillStyle = `rgba(42,33,24,${Math.abs(grain)})`;
-          ctx.fillRect(x, y, 1.5, 1.5);
-        }
+      if (grainCanvas) {
+        ctx.globalCompositeOperation = "soft-light";
+        ctx.drawImage(grainCanvas, 0, 0, width, height);
+        ctx.globalCompositeOperation = "source-over";
       }
-      ctx.globalCompositeOperation = "source-over";
     }
 
     function destroy() {
@@ -1531,6 +1528,20 @@
     win.addEventListener("resize", resize);
     win.addEventListener("mousemove", onMove, { passive: true });
     applyResize();
+    grainCanvas = doc.createElement("canvas");
+    const grainCtx = grainCanvas.getContext("2d");
+    grainCanvas.width = canvas.width;
+    grainCanvas.height = canvas.height;
+    if (grainCtx) {
+      grainCtx.globalCompositeOperation = "soft-light";
+      for (let x = 0; x < grainCanvas.width; x += 14) {
+        for (let y = 0; y < grainCanvas.height; y += 14) {
+          const grain = ((Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1) * 0.06;
+          grainCtx.fillStyle = `rgba(42,33,24,${Math.abs(grain)})`;
+          grainCtx.fillRect(x, y, 1.5, 1.5);
+        }
+      }
+    }
 
     return {
       destroy,
@@ -2452,44 +2463,40 @@
     }, { passive: true });
 
     win.addEventListener("keydown", (event) => {
-      traceInteraction("interaction:keydown-scroll", () => {
-        const target = event.target;
-        const isTypingField =
-          target instanceof HTMLElement &&
-          (target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA" ||
-            target.tagName === "SELECT" ||
-            target.isContentEditable);
+      const target = event.target;
+      const isTypingField =
+        target instanceof HTMLElement &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
 
-        if (isTypingField) {
-          return;
-        }
+      if (isTypingField) {
+        return;
+      }
 
-        const pageStep = Math.max(320, state.viewportHeight * 0.85);
+      const pageStep = Math.max(320, state.viewportHeight * 0.85);
+      let nextScroll = null;
+
+      if (event.key === "ArrowDown") {
+        nextScroll = clamp(win.scrollY + 90, 0, state.maxScroll);
+      } else if (event.key === "ArrowUp") {
+        nextScroll = clamp(win.scrollY - 90, 0, state.maxScroll);
+      } else if (event.key === "PageDown" || event.key === " ") {
+        nextScroll = clamp(win.scrollY + pageStep, 0, state.maxScroll);
+      } else if (event.key === "PageUp") {
+        nextScroll = clamp(win.scrollY - pageStep, 0, state.maxScroll);
+      } else if (event.key === "Home") {
+        nextScroll = 0;
+      } else if (event.key === "End") {
+        nextScroll = state.maxScroll;
+      }
+
+      if (nextScroll !== null) {
+        state.targetScroll = nextScroll;
         state.lastScrollInputAt = performance.now();
-        let nextScroll = null;
-
-        if (event.key === "ArrowDown") {
-          nextScroll = clamp(win.scrollY + 90, 0, state.maxScroll);
-        } else if (event.key === "ArrowUp") {
-          nextScroll = clamp(win.scrollY - 90, 0, state.maxScroll);
-        } else if (event.key === "PageDown" || event.key === " ") {
-          nextScroll = clamp(win.scrollY + pageStep, 0, state.maxScroll);
-        } else if (event.key === "PageUp") {
-          nextScroll = clamp(win.scrollY - pageStep, 0, state.maxScroll);
-        } else if (event.key === "Home") {
-          nextScroll = 0;
-        } else if (event.key === "End") {
-          nextScroll = state.maxScroll;
-        }
-
-        if (nextScroll !== null) {
-          state.targetScroll = nextScroll;
-          deferTask(() => {
-            win.scrollTo({ top: nextScroll, behavior: "auto" });
-          });
-        }
-      });
+        deferTask(() => win.scrollTo({ top: nextScroll, behavior: "auto" }));
+      }
     });
 
     win.addEventListener("resize", debounce(updateViewport, 96));
@@ -2531,12 +2538,6 @@
 
       element.addEventListener("mouseenter", () => cursor.classList.add("is-hovering"));
       element.addEventListener("mouseleave", () => cursor.classList.remove("is-hovering"));
-      element.addEventListener("pointermove", (event) => {
-        scheduleFrameTask(element, () => {
-          state.mouseX = event.clientX;
-          state.mouseY = event.clientY;
-        });
-      }, { passive: true });
     });
 
     function updateCursor() {
@@ -2822,10 +2823,8 @@
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            deferTask(() => {
-              requestAnimationFrame(() => {
-                entry.target.classList.add("is-revealed");
-              });
+            requestAnimationFrame(() => {
+              entry.target.classList.add("is-revealed");
             });
             observer.unobserve(entry.target);
           }
@@ -2858,11 +2857,8 @@
           element.style.setProperty("--light-x", `${event.clientX - rect.left}px`);
           element.style.setProperty("--light-y", `${event.clientY - rect.top}px`);
         });
-      }, 16);
+      }, 32);
       element.addEventListener("mousemove", (event) => {
-        updateLight(event);
-      }, { passive: true });
-      element.addEventListener("pointermove", (event) => {
         updateLight(event);
       }, { passive: true });
     });
@@ -3137,16 +3133,16 @@
       const sinceWheel = now - (state.lastWheelAt || 0);
       const sinceInput = now - (state.lastScrollInputAt || 0);
       const performanceMode = state.performanceMode || "high";
-      const settleFactor = performanceMode === "low" ? 0.26 : performanceMode === "medium" ? 0.22 : 0.18;
-      const glideFactor = performanceMode === "low" ? 0.18 : performanceMode === "medium" ? 0.15 : 0.12;
+      const settleFactor = performanceMode === "low" ? 0.55 : performanceMode === "medium" ? 0.50 : 0.45;
+      const glideFactor = performanceMode === "low" ? 0.38 : performanceMode === "medium" ? 0.34 : 0.28;
       const easing = sinceWheel < 80 ? glideFactor : settleFactor;
       state.currentScroll += delta * easing;
 
-      if (sinceInput > 90 && Math.abs(state.targetScroll - state.currentScroll) < 1.5) {
+      if (sinceInput > 40 && Math.abs(state.targetScroll - state.currentScroll) < 0.5) {
         state.targetScroll = state.currentScroll;
       }
 
-      if (Math.abs(state.targetScroll - state.currentScroll) < 0.5) {
+      if (Math.abs(state.targetScroll - state.currentScroll) < 0.2) {
         state.currentScroll = state.targetScroll;
       }
       siteShell.style.transform = `translate3d(0, ${-state.currentScroll}px, 0)`;
