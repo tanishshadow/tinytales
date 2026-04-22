@@ -36,14 +36,15 @@ if not GEMINI_API_KEY:
 
 # ── app ──────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="Where Colors Dream API",
+    title="TinyTales API",
     description="Gemini-powered backend for the children's storybook generator",
     version="0.1.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=["null"],
+    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost(?::\d+)?|http://127\.0\.0\.1(?::\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -110,6 +111,7 @@ async def list_storybooks():
             "id": b.id,
             "title": b.title,
             "child_name": b.child_name,
+            "tone": b.tone,
             "created_at": b.created_at,
             "page_count": len(b.pages),
         }

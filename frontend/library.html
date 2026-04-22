@@ -52,6 +52,32 @@
           <p class="eyebrow">after reading</p>
           <h2>A library shaped around repeat comfort</h2>
         </div>
+        <section class="storybook-summary" id="library-summary" aria-live="polite">
+          <div>
+            <p class="eyebrow">live backend library</p>
+            <h3 id="library-current-title">Loading story library...</h3>
+            <p class="storybook-summary-copy" id="library-current-copy">The latest saved backend stories will appear here automatically.</p>
+          </div>
+          <dl class="storybook-meta">
+            <div>
+              <dt>Stories</dt>
+              <dd id="library-story-count">0</dd>
+            </div>
+            <div>
+              <dt>Latest Child</dt>
+              <dd id="library-latest-child">Not set</dd>
+            </div>
+            <div>
+              <dt>Backend</dt>
+              <dd id="library-backend-status">Checking...</dd>
+            </div>
+            <div>
+              <dt>Last Updated</dt>
+              <dd id="library-last-updated">Not set</dd>
+            </div>
+          </dl>
+        </section>
+        <div class="detail-grid" id="library-story-list" aria-live="polite"></div>
         <div class="detail-grid">
           <article class="detail-card">
             <h3>Save Stories</h3>
@@ -98,5 +124,7 @@
     </main>
   </div>
   <script src="app.js" defer></script>
+  <script src="api-config.js" defer></script>
+  <script src="story-integration.js" defer></script>
 </body>
 </html>

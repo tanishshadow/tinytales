@@ -264,20 +264,25 @@
           </a>
         </div>
 
-        <form class="contact-form">
+        <form class="contact-form" id="story-generator-form">
           <label>
             <span>Child name</span>
-            <input type="text" placeholder="Luna">
+            <input id="child-name" name="child_name" type="text" placeholder="Luna" maxlength="60">
           </label>
           <label>
             <span>What fear should we reframe?</span>
-            <textarea rows="4" placeholder="The dark feels big at bedtime."></textarea>
+            <textarea id="story-prompt" name="prompt" rows="4" placeholder="The dark feels big at bedtime." required></textarea>
           </label>
-          <button class="button button-primary" type="submit">Generate a gentle story</button>
+          <input type="hidden" name="tone" value="gentle">
+          <input type="hidden" name="num_pages" value="5">
+          <button class="button button-primary" id="story-submit-button" type="submit">Generate a gentle story</button>
+          <p class="story-generator-status" id="story-generator-status" aria-live="polite"></p>
         </form>
       </section>
     </main>
   </div>
   <script src="app.js" defer></script>
+  <script src="api-config.js" defer></script>
+  <script src="story-integration.js" defer></script>
 </body>
 </html>

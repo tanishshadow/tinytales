@@ -52,6 +52,31 @@
           <p class="eyebrow">family management</p>
           <h2>Control for parents, simplicity for children</h2>
         </div>
+        <section class="storybook-summary" id="parent-controls-summary" aria-live="polite">
+          <div>
+            <p class="eyebrow">live backend controls view</p>
+            <h3>Family story status</h3>
+            <p class="storybook-summary-copy" id="parent-controls-copy">Checking the backend for the latest family story context.</p>
+          </div>
+          <dl class="storybook-meta">
+            <div>
+              <dt>Backend</dt>
+              <dd id="parent-backend-status">Checking...</dd>
+            </div>
+            <div>
+              <dt>Stories</dt>
+              <dd id="parent-story-count">0</dd>
+            </div>
+            <div>
+              <dt>Current Child</dt>
+              <dd id="parent-current-child">Not set</dd>
+            </div>
+            <div>
+              <dt>Last Updated</dt>
+              <dd id="parent-last-updated">Not set</dd>
+            </div>
+          </dl>
+        </section>
         <div class="detail-grid">
           <article class="detail-card">
             <h3>Edit Generated Story</h3>
@@ -116,5 +141,7 @@
     </main>
   </div>
   <script src="app.js" defer></script>
+  <script src="api-config.js" defer></script>
+  <script src="story-integration.js" defer></script>
 </body>
 </html>
