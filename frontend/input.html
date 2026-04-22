@@ -59,6 +59,55 @@
           <p class="eyebrow">entry points</p>
           <h2>Every first sentence can arrive a different way</h2>
         </div>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">working input setup</p>
+            <h3>Save how this family likes to begin</h3>
+            <p>These preferences now feed the real app state, so the next story generation picks up the preferred input method, language, prompt guidance, and extra context.</p>
+          </div>
+          <form class="story-generator-form" id="input-preferences-form">
+            <label>
+              <span>Preferred input method</span>
+              <select name="input_method">
+                <option value="text">Typed note</option>
+                <option value="voice">Live voice note</option>
+                <option value="upload">Uploaded audio memo</option>
+                <option value="guided">Guided prompt flow</option>
+              </select>
+            </label>
+            <label>
+              <span>Primary language</span>
+              <select name="language">
+                <option value="English">English</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Bilingual">Bilingual</option>
+                <option value="Spanish">Spanish</option>
+              </select>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Guided prompt starter</span>
+              <textarea name="guided_prompt" rows="4" placeholder="When bedtime feels hard, start by asking what part of the room or moment feels biggest."></textarea>
+            </label>
+            <label>
+              <span>Voice feel</span>
+              <select name="voice_style">
+                <option value="calm">Calm</option>
+                <option value="playful">Playful</option>
+                <option value="steady">Steady</option>
+                <option value="sleepy">Sleepy</option>
+              </select>
+            </label>
+            <label>
+              <span>Quick family note</span>
+              <input name="notes" type="text" maxlength="140" placeholder="Loves animal helpers and short sentences.">
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Save Input Preferences</button>
+              <a class="button button-secondary" href="generation.html">Use these in story generation</a>
+            </div>
+            <p class="story-generator-status" id="input-preferences-status" aria-live="polite"></p>
+          </form>
+        </div>
         <div class="detail-grid">
           <article class="detail-card">
             <h3>Voice Recording</h3>

@@ -78,6 +78,61 @@
             </div>
           </dl>
         </section>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">audio controls</p>
+            <h3>Choose how the story should sound</h3>
+            <p>Audio preferences now save into the shared family state and travel with each newly generated story.</p>
+          </div>
+          <form class="story-generator-form" id="audio-settings-form">
+            <label>
+              <span>Narrator voice</span>
+              <select name="narrator_voice">
+                <option value="gentle">Gentle</option>
+                <option value="playful">Playful</option>
+                <option value="adventurous">Adventurous</option>
+                <option value="whisper">Whisper-soft</option>
+              </select>
+            </label>
+            <label>
+              <span>Background music</span>
+              <select name="background_music">
+                <option value="moonlight">Moonlight piano</option>
+                <option value="forest">Forest hush</option>
+                <option value="ocean">Slow ocean</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+            <label>
+              <span>Playback speed</span>
+              <select name="playback_speed">
+                <option value="0.9">Slow</option>
+                <option value="1" selected>Standard</option>
+                <option value="1.1">A little quicker</option>
+              </select>
+            </label>
+            <label>
+              <span>Parent voice note</span>
+              <input name="parent_voice_note" type="text" maxlength="120" placeholder="Use my voice for the last page.">
+            </label>
+            <label class="toggle-field">
+              <input name="narration_enabled" type="checkbox" checked>
+              <span>Enable narration by default</span>
+            </label>
+            <label class="toggle-field">
+              <input name="sound_effects" type="checkbox" checked>
+              <span>Use gentle sound effects</span>
+            </label>
+            <label class="toggle-field">
+              <input name="parent_voice_enabled" type="checkbox">
+              <span>Offer a parent voice version</span>
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Save Audio Settings</button>
+            </div>
+            <p class="story-generator-status" id="audio-settings-status" aria-live="polite"></p>
+          </form>
+        </div>
         <div class="detail-grid">
           <article class="detail-card">
             <h3>Auto Narration</h3>

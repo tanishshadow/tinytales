@@ -77,6 +77,59 @@
             </div>
           </dl>
         </section>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">mode settings</p>
+            <h3>Shape the reading atmosphere</h3>
+            <p>Theme and bedtime preferences now persist, so the reading pages can open with the right mood for the room and the moment.</p>
+          </div>
+          <form class="story-generator-form" id="experience-settings-form">
+            <label>
+              <span>Mode</span>
+              <select name="mode">
+                <option value="day">Daytime</option>
+                <option value="bedtime">Bedtime</option>
+                <option value="quiet-time">Quiet time</option>
+              </select>
+            </label>
+            <label>
+              <span>Theme</span>
+              <select name="theme">
+                <option value="sunrise-paper">Sunrise paper</option>
+                <option value="moon-ink">Moon ink</option>
+                <option value="forest-mist">Forest mist</option>
+              </select>
+            </label>
+            <label>
+              <span>Text size</span>
+              <select name="text_size">
+                <option value="standard">Standard</option>
+                <option value="large">Large</option>
+                <option value="extra-large">Extra large</option>
+              </select>
+            </label>
+            <label>
+              <span>Reading pace</span>
+              <select name="reading_pace">
+                <option value="balanced">Balanced</option>
+                <option value="slow">Slow and sleepy</option>
+                <option value="bright">Bright and brisk</option>
+              </select>
+            </label>
+            <label class="toggle-field">
+              <input name="auto_play_audio" type="checkbox">
+              <span>Auto-play narration when a story opens</span>
+            </label>
+            <label class="toggle-field">
+              <input name="reduced_motion" type="checkbox">
+              <span>Reduce motion and animation</span>
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Save Experience Settings</button>
+            </div>
+            <p class="story-generator-status" id="experience-settings-status" aria-live="polite"></p>
+          </form>
+        </div>
         <div class="detail-grid">
           <article class="detail-card">
             <h3>Bedtime Mode</h3>

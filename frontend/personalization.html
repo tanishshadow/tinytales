@@ -77,6 +77,65 @@
             </div>
           </dl>
         </section>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">child profile</p>
+            <h3>Make the story feel unmistakably theirs</h3>
+            <p>These details are now saved for future generations and library views, so the next story can reuse the child profile instead of asking again.</p>
+          </div>
+          <form class="story-generator-form" id="personalization-form">
+            <label>
+              <span>Child name</span>
+              <input name="child_name" type="text" maxlength="60" placeholder="Luna">
+            </label>
+            <label>
+              <span>Pronouns</span>
+              <select name="pronouns">
+                <option value="she/her">She / her</option>
+                <option value="he/him">He / him</option>
+                <option value="they/them">They / them</option>
+              </select>
+            </label>
+            <label>
+              <span>Age range</span>
+              <select name="age_range">
+                <option value="3-4">3-4</option>
+                <option value="4-6">4-6</option>
+                <option value="6-8">6-8</option>
+              </select>
+            </label>
+            <label>
+              <span>Avatar</span>
+              <select name="avatar">
+                <option value="star">Starlight explorer</option>
+                <option value="fox">Fox friend</option>
+                <option value="bear">Cozy bear</option>
+                <option value="moon">Moon keeper</option>
+              </select>
+            </label>
+            <label>
+              <span>Favorite color</span>
+              <input name="favorite_color" type="text" maxlength="40" placeholder="Golden Honey">
+            </label>
+            <label>
+              <span>Favorite animal</span>
+              <input name="favorite_animal" type="text" maxlength="40" placeholder="Fox">
+            </label>
+            <label>
+              <span>Comfort object</span>
+              <input name="comfort_object" type="text" maxlength="40" placeholder="Blanket">
+            </label>
+            <label>
+              <span>Interests</span>
+              <input name="interests" type="text" maxlength="120" placeholder="Rainbows, rockets, sleepy forests">
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Save Child Profile</button>
+              <a class="button button-secondary" href="generation.html">Generate with this profile</a>
+            </div>
+            <p class="story-generator-status" id="personalization-status" aria-live="polite"></p>
+          </form>
+        </div>
         <div class="detail-grid">
           <article class="detail-card">
             <h3>Child Name</h3>

@@ -77,6 +77,111 @@
             </div>
           </dl>
         </section>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">working parent controls</p>
+            <h3>Review the current family defaults</h3>
+            <p>These settings now save to the backend, and the latest generated story can also be edited directly below before the next read.</p>
+          </div>
+          <form class="story-generator-form" id="parent-controls-form">
+            <label>
+              <span>Story intensity</span>
+              <select name="intensity">
+                <option value="gentle">Gentle</option>
+                <option value="balanced">Balanced</option>
+                <option value="brave">More brave</option>
+              </select>
+            </label>
+            <label>
+              <span>Reading language</span>
+              <select name="language">
+                <option value="English">English</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Bilingual">Bilingual</option>
+                <option value="Spanish">Spanish</option>
+              </select>
+            </label>
+            <label class="toggle-field">
+              <input name="review_before_reading" type="checkbox" checked>
+              <span>Require parent review before reading</span>
+            </label>
+            <label class="toggle-field">
+              <input name="allow_sharing" type="checkbox" checked>
+              <span>Allow share links</span>
+            </label>
+            <label class="toggle-field">
+              <input name="allow_exports" type="checkbox" checked>
+              <span>Allow printable exports</span>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Parent notes</span>
+              <textarea name="notes" rows="4" placeholder="Keep sentences shorter on hard nights and end with extra reassurance."></textarea>
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Save Parent Controls</button>
+            </div>
+            <p class="story-generator-status" id="parent-controls-status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">latest story editor</p>
+            <h3>Edit the newest generated story</h3>
+            <p>If a story feels close but not quite right, this editor updates the saved version without affecting older stories.</p>
+          </div>
+          <form class="story-generator-form" id="story-edit-form">
+            <label class="story-generator-field-full">
+              <span>Story title</span>
+              <input name="title" type="text" maxlength="120" placeholder="A softer title for tonight's story">
+            </label>
+            <label>
+              <span>Child name</span>
+              <input name="child_name" type="text" maxlength="60" placeholder="Luna">
+            </label>
+            <label>
+              <span>Tone</span>
+              <select name="tone">
+                <option value="gentle">Gentle</option>
+                <option value="fun">Fun</option>
+                <option value="adventurous">Adventurous</option>
+              </select>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Prompt summary</span>
+              <textarea name="original_prompt" rows="4" placeholder="What should the story acknowledge?"></textarea>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Page 1</span>
+              <textarea name="page_1" rows="3"></textarea>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Page 2</span>
+              <textarea name="page_2" rows="3"></textarea>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Page 3</span>
+              <textarea name="page_3" rows="3"></textarea>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Page 4</span>
+              <textarea name="page_4" rows="3"></textarea>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Page 5</span>
+              <textarea name="page_5" rows="3"></textarea>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Page 6</span>
+              <textarea name="page_6" rows="3"></textarea>
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Save Story Edits</button>
+              <a class="button button-secondary" href="storybook.html">Open current story</a>
+            </div>
+            <p class="story-generator-status" id="story-edit-status" aria-live="polite"></p>
+          </form>
+        </div>
         <div class="detail-grid">
           <article class="detail-card">
             <h3>Edit Generated Story</h3>
