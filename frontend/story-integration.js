@@ -1,15 +1,6 @@
 (function () {
+  const API_BASE = "https://tinytales-2f38.onrender.com";
   const STORAGE_KEY = "tiny.latestStorybook";
-  const API_BASE_KEY = "tiny.storyApiBase";
-  const DEFAULT_API_BASE = "http://127.0.0.1:8000";
-
-  function getApiBase() {
-    const configured =
-      window.STORY_API_BASE ||
-      window.localStorage.getItem(API_BASE_KEY) ||
-      DEFAULT_API_BASE;
-    return String(configured || DEFAULT_API_BASE).replace(/\/+$/, "");
-  }
 
   function saveStorybook(storybook) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storybook));
@@ -53,13 +44,12 @@
       formData.set("child_name", "the little one");
     }
 
-    const apiBase = getApiBase();
     submitButton.disabled = true;
     form.dataset.busy = "true";
     setStatus(status, "Generating storybook from the backend...", "loading");
 
     try {
-      const response = await fetch(apiBase + "/api/generate", {
+      const response = await fetch(`${API_BASE}/api/generate`, {
         method: "POST",
         body: formData,
       });
@@ -104,9 +94,8 @@
       return null;
     }
 
-    const apiBase = getApiBase();
     const response = await fetch(
-      apiBase + "/api/storybook/" + encodeURIComponent(storybookId)
+      `${API_BASE}/api/storybook/${encodeURIComponent(storybookId)}`
     );
 
     if (!response.ok) {
