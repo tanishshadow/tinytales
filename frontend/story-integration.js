@@ -145,6 +145,12 @@
     });
   }
 
+  function wakeBackend() {
+    fetch(getApiBase() + "/api/health").catch(function () {
+      return null;
+    });
+  }
+
   function updateStoryContext(storybook, health) {
     const titleElement = document.getElementById("page-current-title");
     const copyElement = document.getElementById("page-current-copy");
@@ -405,6 +411,8 @@
     if (!form) {
       return;
     }
+
+    wakeBackend();
 
     Promise.all([
       fetchPreference("/api/preferences/input").catch(function () {

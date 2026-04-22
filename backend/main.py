@@ -75,6 +75,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://tinytales-azure.vercel.app",
+        "https://tinytales-azure.vercel.app/"
     ],
     allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)?vercel\.app",
     allow_credentials=True,
@@ -198,11 +199,13 @@ async def create_storybook(
         )
     )
 
+    storybook_payload = dict(storybook_data)
+    storybook_payload["child_name"] = resolved_child_name
+    storybook_payload["original_prompt"] = clean_prompt
+    storybook_payload["tone"] = requested_tone
+
     book = Storybook(
-        **storybook_data,
-        child_name=resolved_child_name,
-        original_prompt=clean_prompt,
-        tone=requested_tone,
+        **storybook_payload,
         input_preferences=store.get_input_preferences(),
         personalization=saved_profile.model_copy(update={"child_name": resolved_child_name}),
         audio_settings=store.get_audio_settings(),

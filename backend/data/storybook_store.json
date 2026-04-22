@@ -1,0 +1,497 @@
+{
+  "stories": [
+    {
+      "id": "940fd5ac0a6347aa",
+      "title": "The Little One and the Wobbly String",
+      "child_name": "the little one",
+      "original_prompt": "string",
+      "tone": "gentle",
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "The little one felt a wobbly feeling, like a loose string inside their tummy. It made them feel a little bit worried, like a kite with a tangled tail.",
+          "mood": "worried"
+        },
+        {
+          "page_number": 2,
+          "text": "One night, a friendly Moonbeam tiptoed into the little one's room. \"That wobbly string is just your feelings dancing,\" it whispered, \"and we can help them dance a happy tune!\"",
+          "mood": "magical"
+        },
+        {
+          "page_number": 3,
+          "text": "The Moonbeam showed the little one how to find the Silly String Sprites. They were tiny, giggling creatures who loved to twist and twirl all the feelings away.",
+          "mood": "playful"
+        },
+        {
+          "page_number": 4,
+          "text": "The little one took a deep breath, imagining the Silly String Sprites tickling the wobbly feeling. They giggled and wiggled, making the string dance itself into a happy knot.",
+          "mood": "brave"
+        },
+        {
+          "page_number": 5,
+          "text": "The wobbly feeling smoothed out, leaving a warm, cozy hum. The little one snuggled down, safe and sound, with happy dreams dancing in their sleep.",
+          "mood": "cozy"
+        }
+      ],
+      "created_at": "2026-04-22T20:10:37.273740+00:00",
+      "updated_at": "2026-04-22T20:10:37.273776+00:00",
+      "is_favorite": false,
+      "share_id": null,
+      "input_preferences": {
+        "input_method": "text",
+        "language": "English",
+        "guided_prompt": "",
+        "voice_style": "calm",
+        "notes": ""
+      },
+      "personalization": {
+        "child_name": "the little one",
+        "pronouns": "they/them",
+        "age_range": "4-6",
+        "avatar": "star",
+        "favorite_color": "Golden Honey",
+        "favorite_animal": "fox",
+        "comfort_object": "blanket",
+        "interests": []
+      },
+      "audio_settings": {
+        "narration_enabled": true,
+        "narrator_voice": "gentle",
+        "playback_speed": 1.0,
+        "background_music": "moonlight",
+        "sound_effects": true,
+        "parent_voice_enabled": false,
+        "parent_voice_note": ""
+      },
+      "experience_settings": {
+        "mode": "day",
+        "theme": "sunrise-paper",
+        "text_size": "standard",
+        "reading_pace": "balanced",
+        "auto_play_audio": false,
+        "reduced_motion": false
+      },
+      "parent_controls": {
+        "intensity": "gentle",
+        "language": "English",
+        "allow_sharing": true,
+        "allow_exports": true,
+        "review_before_reading": true,
+        "notes": ""
+      },
+      "request_cache_key": "af7ffbc3ff57a8eb691c50a061c19a73f257a7a5a0e509d8e13835aa03ea7c71",
+      "generation_source": "cache"
+    },
+    {
+      "id": "2907bf39671c4336",
+      "title": "The Little One and the Wobbly String",
+      "child_name": "the little one",
+      "original_prompt": "string",
+      "tone": "gentle",
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "The little one felt a wobbly feeling, like a loose string inside their tummy. It made them feel a little bit worried, like a kite with a tangled tail.",
+          "mood": "worried"
+        },
+        {
+          "page_number": 2,
+          "text": "One night, a friendly Moonbeam tiptoed into the little one's room. \"That wobbly string is just your feelings dancing,\" it whispered, \"and we can help them dance a happy tune!\"",
+          "mood": "magical"
+        },
+        {
+          "page_number": 3,
+          "text": "The Moonbeam showed the little one how to find the Silly String Sprites. They were tiny, giggling creatures who loved to twist and twirl all the feelings away.",
+          "mood": "playful"
+        },
+        {
+          "page_number": 4,
+          "text": "The little one took a deep breath, imagining the Silly String Sprites tickling the wobbly feeling. They giggled and wiggled, making the string dance itself into a happy knot.",
+          "mood": "brave"
+        },
+        {
+          "page_number": 5,
+          "text": "The wobbly feeling smoothed out, leaving a warm, cozy hum. The little one snuggled down, safe and sound, with happy dreams dancing in their sleep.",
+          "mood": "cozy"
+        }
+      ],
+      "created_at": "2026-04-22T20:10:35.968003+00:00",
+      "updated_at": "2026-04-22T20:10:35.968032+00:00",
+      "is_favorite": false,
+      "share_id": null,
+      "input_preferences": {
+        "input_method": "text",
+        "language": "English",
+        "guided_prompt": "",
+        "voice_style": "calm",
+        "notes": ""
+      },
+      "personalization": {
+        "child_name": "the little one",
+        "pronouns": "they/them",
+        "age_range": "4-6",
+        "avatar": "star",
+        "favorite_color": "Golden Honey",
+        "favorite_animal": "fox",
+        "comfort_object": "blanket",
+        "interests": []
+      },
+      "audio_settings": {
+        "narration_enabled": true,
+        "narrator_voice": "gentle",
+        "playback_speed": 1.0,
+        "background_music": "moonlight",
+        "sound_effects": true,
+        "parent_voice_enabled": false,
+        "parent_voice_note": ""
+      },
+      "experience_settings": {
+        "mode": "day",
+        "theme": "sunrise-paper",
+        "text_size": "standard",
+        "reading_pace": "balanced",
+        "auto_play_audio": false,
+        "reduced_motion": false
+      },
+      "parent_controls": {
+        "intensity": "gentle",
+        "language": "English",
+        "allow_sharing": true,
+        "allow_exports": true,
+        "review_before_reading": true,
+        "notes": ""
+      },
+      "request_cache_key": "af7ffbc3ff57a8eb691c50a061c19a73f257a7a5a0e509d8e13835aa03ea7c71",
+      "generation_source": "cache"
+    },
+    {
+      "id": "a66a7cf226bf4009",
+      "title": "Test Story",
+      "child_name": "Mira",
+      "original_prompt": "same prompt",
+      "tone": "gentle",
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "Page one",
+          "mood": "calm"
+        },
+        {
+          "page_number": 2,
+          "text": "Page two",
+          "mood": "safe"
+        }
+      ],
+      "created_at": "2026-04-22T20:09:56.021318+00:00",
+      "updated_at": "2026-04-22T20:09:56.021339+00:00",
+      "is_favorite": false,
+      "share_id": null,
+      "input_preferences": {
+        "input_method": "text",
+        "language": "English",
+        "guided_prompt": "",
+        "voice_style": "calm",
+        "notes": ""
+      },
+      "personalization": {
+        "child_name": "Mira",
+        "pronouns": "they/them",
+        "age_range": "4-6",
+        "avatar": "star",
+        "favorite_color": "Golden Honey",
+        "favorite_animal": "fox",
+        "comfort_object": "blanket",
+        "interests": []
+      },
+      "audio_settings": {
+        "narration_enabled": true,
+        "narrator_voice": "gentle",
+        "playback_speed": 1.0,
+        "background_music": "moonlight",
+        "sound_effects": true,
+        "parent_voice_enabled": false,
+        "parent_voice_note": ""
+      },
+      "experience_settings": {
+        "mode": "day",
+        "theme": "sunrise-paper",
+        "text_size": "standard",
+        "reading_pace": "balanced",
+        "auto_play_audio": false,
+        "reduced_motion": false
+      },
+      "parent_controls": {
+        "intensity": "gentle",
+        "language": "English",
+        "allow_sharing": true,
+        "allow_exports": true,
+        "review_before_reading": true,
+        "notes": ""
+      },
+      "request_cache_key": "6061ceaca31fafc4237b1c0f8a92ffe2d44c2e107bf736a171f775f1eafd7b1f",
+      "generation_source": "cache"
+    },
+    {
+      "id": "cb1328544b034bd1",
+      "title": "Test Story",
+      "child_name": "Mira",
+      "original_prompt": "same prompt",
+      "tone": "gentle",
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "Page one",
+          "mood": "calm"
+        },
+        {
+          "page_number": 2,
+          "text": "Page two",
+          "mood": "safe"
+        }
+      ],
+      "created_at": "2026-04-22T20:09:56.016802+00:00",
+      "updated_at": "2026-04-22T20:09:56.016821+00:00",
+      "is_favorite": false,
+      "share_id": null,
+      "input_preferences": {
+        "input_method": "text",
+        "language": "English",
+        "guided_prompt": "",
+        "voice_style": "calm",
+        "notes": ""
+      },
+      "personalization": {
+        "child_name": "Mira",
+        "pronouns": "they/them",
+        "age_range": "4-6",
+        "avatar": "star",
+        "favorite_color": "Golden Honey",
+        "favorite_animal": "fox",
+        "comfort_object": "blanket",
+        "interests": []
+      },
+      "audio_settings": {
+        "narration_enabled": true,
+        "narrator_voice": "gentle",
+        "playback_speed": 1.0,
+        "background_music": "moonlight",
+        "sound_effects": true,
+        "parent_voice_enabled": false,
+        "parent_voice_note": ""
+      },
+      "experience_settings": {
+        "mode": "day",
+        "theme": "sunrise-paper",
+        "text_size": "standard",
+        "reading_pace": "balanced",
+        "auto_play_audio": false,
+        "reduced_motion": false
+      },
+      "parent_controls": {
+        "intensity": "gentle",
+        "language": "English",
+        "allow_sharing": true,
+        "allow_exports": true,
+        "review_before_reading": true,
+        "notes": ""
+      },
+      "request_cache_key": "6061ceaca31fafc4237b1c0f8a92ffe2d44c2e107bf736a171f775f1eafd7b1f",
+      "generation_source": "cache"
+    },
+    {
+      "id": "fakeid1234567890",
+      "title": "Fresh Story",
+      "child_name": "Mira",
+      "original_prompt": "brand new prompt 12345",
+      "tone": "gentle",
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "Fresh page one",
+          "mood": "calm"
+        },
+        {
+          "page_number": 2,
+          "text": "Fresh page two",
+          "mood": "safe"
+        }
+      ],
+      "created_at": "2026-01-01T00:00:00+00:00",
+      "updated_at": "2026-04-22T20:10:06.479006+00:00",
+      "is_favorite": false,
+      "share_id": null,
+      "input_preferences": {
+        "input_method": "text",
+        "language": "English",
+        "guided_prompt": "",
+        "voice_style": "calm",
+        "notes": ""
+      },
+      "personalization": {
+        "child_name": "Mira",
+        "pronouns": "they/them",
+        "age_range": "4-6",
+        "avatar": "star",
+        "favorite_color": "Golden Honey",
+        "favorite_animal": "fox",
+        "comfort_object": "blanket",
+        "interests": []
+      },
+      "audio_settings": {
+        "narration_enabled": true,
+        "narrator_voice": "gentle",
+        "playback_speed": 1.0,
+        "background_music": "moonlight",
+        "sound_effects": true,
+        "parent_voice_enabled": false,
+        "parent_voice_note": ""
+      },
+      "experience_settings": {
+        "mode": "day",
+        "theme": "sunrise-paper",
+        "text_size": "standard",
+        "reading_pace": "balanced",
+        "auto_play_audio": false,
+        "reduced_motion": false
+      },
+      "parent_controls": {
+        "intensity": "gentle",
+        "language": "English",
+        "allow_sharing": true,
+        "allow_exports": true,
+        "review_before_reading": true,
+        "notes": ""
+      },
+      "request_cache_key": "6f326cbf80cae4c5f6be739d0b3a8e4908b75411a542cf464b3ee24756961a4c",
+      "generation_source": "gemini"
+    }
+  ],
+  "input_preferences": {
+    "input_method": "text",
+    "language": "English",
+    "guided_prompt": "",
+    "voice_style": "calm",
+    "notes": ""
+  },
+  "personalization": {
+    "child_name": "",
+    "pronouns": "they/them",
+    "age_range": "4-6",
+    "avatar": "star",
+    "favorite_color": "Golden Honey",
+    "favorite_animal": "fox",
+    "comfort_object": "blanket",
+    "interests": []
+  },
+  "audio_settings": {
+    "narration_enabled": true,
+    "narrator_voice": "gentle",
+    "playback_speed": 1.0,
+    "background_music": "moonlight",
+    "sound_effects": true,
+    "parent_voice_enabled": false,
+    "parent_voice_note": ""
+  },
+  "experience_settings": {
+    "mode": "day",
+    "theme": "sunrise-paper",
+    "text_size": "standard",
+    "reading_pace": "balanced",
+    "auto_play_audio": false,
+    "reduced_motion": false
+  },
+  "parent_controls": {
+    "intensity": "gentle",
+    "language": "English",
+    "allow_sharing": true,
+    "allow_exports": true,
+    "review_before_reading": true,
+    "notes": ""
+  },
+  "generation_cache": {
+    "af7ffbc3ff57a8eb691c50a061c19a73f257a7a5a0e509d8e13835aa03ea7c71": {
+      "request_cache_key": "af7ffbc3ff57a8eb691c50a061c19a73f257a7a5a0e509d8e13835aa03ea7c71",
+      "title": "The Little One and the Wobbly String",
+      "child_name": "the little one",
+      "original_prompt": "string",
+      "tone": "gentle",
+      "num_pages": 5,
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "The little one felt a wobbly feeling, like a loose string inside their tummy. It made them feel a little bit worried, like a kite with a tangled tail.",
+          "mood": "worried"
+        },
+        {
+          "page_number": 2,
+          "text": "One night, a friendly Moonbeam tiptoed into the little one's room. \"That wobbly string is just your feelings dancing,\" it whispered, \"and we can help them dance a happy tune!\"",
+          "mood": "magical"
+        },
+        {
+          "page_number": 3,
+          "text": "The Moonbeam showed the little one how to find the Silly String Sprites. They were tiny, giggling creatures who loved to twist and twirl all the feelings away.",
+          "mood": "playful"
+        },
+        {
+          "page_number": 4,
+          "text": "The little one took a deep breath, imagining the Silly String Sprites tickling the wobbly feeling. They giggled and wiggled, making the string dance itself into a happy knot.",
+          "mood": "brave"
+        },
+        {
+          "page_number": 5,
+          "text": "The wobbly feeling smoothed out, leaving a warm, cozy hum. The little one snuggled down, safe and sound, with happy dreams dancing in their sleep.",
+          "mood": "cozy"
+        }
+      ],
+      "created_at": "2026-04-22T20:08:38.881892+00:00",
+      "last_used_at": "2026-04-22T20:10:37.272360+00:00",
+      "hit_count": 2
+    },
+    "6061ceaca31fafc4237b1c0f8a92ffe2d44c2e107bf736a171f775f1eafd7b1f": {
+      "request_cache_key": "6061ceaca31fafc4237b1c0f8a92ffe2d44c2e107bf736a171f775f1eafd7b1f",
+      "title": "Test Story",
+      "child_name": "Mira",
+      "original_prompt": "same prompt",
+      "tone": "gentle",
+      "num_pages": 5,
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "Page one",
+          "mood": "calm"
+        },
+        {
+          "page_number": 2,
+          "text": "Page two",
+          "mood": "safe"
+        }
+      ],
+      "created_at": "2026-04-22T20:09:35.015885+00:00",
+      "last_used_at": "2026-04-22T20:09:56.020648+00:00",
+      "hit_count": 2
+    },
+    "6f326cbf80cae4c5f6be739d0b3a8e4908b75411a542cf464b3ee24756961a4c": {
+      "request_cache_key": "6f326cbf80cae4c5f6be739d0b3a8e4908b75411a542cf464b3ee24756961a4c",
+      "title": "Fresh Story",
+      "child_name": "Mira",
+      "original_prompt": "brand new prompt 12345",
+      "tone": "gentle",
+      "num_pages": 5,
+      "pages": [
+        {
+          "page_number": 1,
+          "text": "Fresh page one",
+          "mood": "calm"
+        },
+        {
+          "page_number": 2,
+          "text": "Fresh page two",
+          "mood": "safe"
+        }
+      ],
+      "created_at": "2026-04-22T20:10:06.477834+00:00",
+      "last_used_at": "2026-04-22T20:10:06.477852+00:00",
+      "hit_count": 0
+    }
+  }
+}
