@@ -2453,6 +2453,18 @@
 
     win.addEventListener("keydown", (event) => {
       traceInteraction("interaction:keydown-scroll", () => {
+        const target = event.target;
+        const isTypingField =
+          target instanceof HTMLElement &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.tagName === "SELECT" ||
+            target.isContentEditable);
+
+        if (isTypingField) {
+          return;
+        }
+
         const pageStep = Math.max(320, state.viewportHeight * 0.85);
         state.lastScrollInputAt = performance.now();
         let nextScroll = null;
