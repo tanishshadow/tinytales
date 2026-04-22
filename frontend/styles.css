@@ -1203,7 +1203,7 @@ body.has-webgl-ink::before {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: var(--bg);
+  background: #faf6f0;
   overflow: hidden;
 }
 
@@ -1214,6 +1214,7 @@ body.has-webgl-ink::before {
   height: 100%;
   pointer-events: none;
   display: block;
+  background: #faf6f0;
 }
 
 .ambient-breathe {
