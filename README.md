@@ -169,7 +169,16 @@ Create `backend/.env`:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/api/auth/google/callback
+AUTH_COOKIE_SECRET=replace_with_a_long_random_secret
+FRONTEND_BASE_URL=http://127.0.0.1:3000
+AUTH_COOKIE_SECURE=false
+AUTH_COOKIE_SAMESITE=lax
 ```
+
+For a hosted frontend and backend on different domains, use `AUTH_COOKIE_SECURE=true` and `AUTH_COOKIE_SAMESITE=none`.
 
 ### 3. Run the API
 
@@ -223,6 +232,10 @@ location.reload();
 | `POST` | `/api/storybook/{id}/share` | Create a share id |
 | `GET` | `/api/storybook/{id}/export` | Export printable text |
 | `GET` | `/api/shared/{share_id}` | Load a shared story |
+| `GET` | `/api/auth/google` | Start Google login or signup with `?mode=login` or `?mode=signup` |
+| `GET` | `/api/auth/google/callback` | Finish the Google OAuth callback and create a session |
+| `GET` | `/api/auth/session` | Return the current signed-in parent session |
+| `POST` | `/api/auth/logout` | Clear the parent session cookie |
 | `GET` | `/api/health` | Health check for warm-up and deploy checks |
 
 ### Preference endpoints

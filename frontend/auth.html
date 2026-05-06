@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TinyTales | Parent Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600;1,700&family=Lora:ital,wght@1,400;1,600&family=DM+Sans:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">TinyTales</span>
+        <span class="brand-note">gentle stories for brave little hearts</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="library.html">Library</a>
+        <a href="parent-controls.html">Parent Controls</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="subpage-hero auth-hero">
+        <div class="grain-overlay" aria-hidden="true"></div>
+        <div class="page-width subpage-inner">
+          <div class="subpage-copy">
+            <p class="eyebrow">one calm parent doorway for family stories</p>
+            <h1>Parent Sign In</h1>
+            <p class="hero-tagline">Use Google to keep family storybooks, child preferences, and parent controls tied to a trusted account.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" data-auth-mode="signup" href="#">Sign up with Google</a>
+              <a class="button button-secondary" data-auth-mode="login" href="#">Log in with Google</a>
+            </div>
+          </div>
+          <div class="mini-illustration auth-illustration">
+            <svg viewBox="0 0 320 320" role="img" aria-label="A secure parent account illustration">
+              <circle cx="160" cy="160" r="92" fill="rgba(243, 237, 228, 0.95)" stroke="#2A2118" stroke-width="1.5"></circle>
+              <path d="M105 155c0-35 23-61 55-61s55 26 55 61" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linecap="round"></path>
+              <rect x="94" y="145" width="132" height="96" rx="34" fill="rgba(184, 228, 220, 0.82)" stroke="#2A2118" stroke-width="1.5"></rect>
+              <circle cx="160" cy="187" r="14" fill="rgba(242, 196, 206, 0.85)" stroke="#2A2118" stroke-width="1.5"></circle>
+              <path d="M160 201v22" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M116 121c12-16 27-24 44-24M204 121c-11-16-26-24-44-24" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linecap="round"></path>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-section page-width" id="account">
+        <div class="section-rule" aria-hidden="true"></div>
+        <div class="auth-grid">
+          <section class="story-generator-panel auth-panel">
+            <div class="story-generator-copy">
+              <p class="eyebrow">google account</p>
+              <h3>Continue with one tap</h3>
+              <p>Sign up and login use the same Google OAuth flow. TinyTales creates the session after Google confirms the parent profile.</p>
+            </div>
+            <div class="auth-actions">
+              <a class="button button-primary" data-auth-mode="signup" href="#">Sign up with Google</a>
+              <a class="button button-secondary" data-auth-mode="login" href="#">Log in with Google</a>
+            </div>
+            <p class="story-generator-status" id="auth-status" aria-live="polite">Checking your account session.</p>
+          </section>
+
+          <section class="story-generator-panel auth-panel">
+            <div class="story-generator-copy">
+              <p class="eyebrow">current session</p>
+              <h3 id="auth-session-title">Not signed in yet</h3>
+              <p id="auth-session-copy">Once connected, this area will show the parent account currently active in this browser.</p>
+            </div>
+            <div class="auth-user-card" id="auth-user-card" hidden>
+              <img id="auth-user-picture" alt="">
+              <div>
+                <strong id="auth-user-name"></strong>
+                <span id="auth-user-email"></span>
+              </div>
+            </div>
+            <div class="auth-actions">
+              <button class="button button-secondary" id="auth-logout" type="button" hidden>Log out</button>
+              <a class="button button-primary" href="parent-controls.html">Open Parent Controls</a>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="quote-band">
+        <div class="page-width quote-layout">
+          <div>
+            <p class="eyebrow eyebrow-invert">family account promise</p>
+            <h2>Authentication should make the grown-up layer feel safer, not heavier.</h2>
+          </div>
+          <div class="quote-copy">
+            <p>The child-facing experience stays story-first while parents get a dependable account layer for saved stories and controls.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="api-config.js" defer></script>
+  <script src="auth.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+
+</html>

@@ -907,12 +907,61 @@ h3 {
   color: #4a6f72;
 }
 
-.story-generator-status[data-state="success"] {
+.story-generator-status[data-state="success"],
+.story-generator-status[data-tone="success"] {
   color: #3d6b4e;
 }
 
-.story-generator-status[data-state="error"] {
+.story-generator-status[data-state="error"],
+.story-generator-status[data-tone="error"] {
   color: #8b1a1a;
+}
+
+.auth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 4vw, 40px);
+}
+
+.auth-panel {
+  grid-template-columns: 1fr;
+  gap: 22px;
+  height: 100%;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.auth-user-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(42, 33, 24, 0.14);
+  border-radius: 18px;
+  background: rgba(250, 246, 240, 0.82);
+}
+
+.auth-user-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(42, 33, 24, 0.16);
+  object-fit: cover;
+}
+
+.auth-user-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.auth-user-card span {
+  color: var(--fg-muted);
+  font-size: 14px;
 }
 
 .storybook-summary {
@@ -1467,6 +1516,7 @@ body.reduced-motion .particle-canvas {
   .feature-grid,
   .subpage-inner,
   .detail-grid,
+  .auth-grid,
   .story-generator-panel,
   .storybook-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1522,6 +1572,7 @@ body.reduced-motion .particle-canvas {
   .feature-grid,
   .subpage-inner,
   .detail-grid,
+  .auth-grid,
   .story-flow,
   .story-generator-panel,
   .storybook-summary,
@@ -1549,6 +1600,10 @@ body.reduced-motion .particle-canvas {
   .hero-actions .button,
   .contact-form .button,
   .story-generator-actions .button {
+    width: 100%;
+  }
+
+  .auth-actions .button {
     width: 100%;
   }
 
