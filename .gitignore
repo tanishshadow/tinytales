@@ -42,3 +42,6 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+.chrome-headless/
+.edge-headless/

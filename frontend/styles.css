@@ -41,6 +41,10 @@ body.has-webgl-ink .grain-overlay {
   display: none;
 }
 
+body.has-weather .grain-overlay {
+  opacity: 0.03;
+}
+
 img,
 svg {
   display: block;
@@ -93,6 +97,102 @@ textarea {
   position: relative;
   overflow: clip;
   z-index: 1;
+  background: transparent;
+}
+
+.site-shell > .site-header,
+.site-shell > main {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.section-bleeds {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.section-bleed {
+  position: absolute;
+  width: 100vw;
+  height: 280px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.65;
+  mix-blend-mode: multiply;
+}
+
+.narrative-thread {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+
+.thread-path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  will-change: stroke-dasharray, stroke-dashoffset, filter, opacity;
+}
+
+.thread-path-main {
+  stroke: rgba(218, 185, 130, 0.55);
+  stroke-width: 1.5px;
+}
+
+.thread-path-glow {
+  stroke: rgba(245, 230, 192, 0.25);
+  stroke-width: 6px;
+  filter: blur(4px);
+}
+
+.thread-path-deep {
+  stroke: rgba(245, 230, 192, 0.08);
+  stroke-width: 14px;
+  filter: blur(10px);
+}
+
+.thread-path-pulse {
+  stroke: rgba(255, 235, 180, 0.5);
+  stroke-width: 3px;
+}
+
+.thread-knot {
+  opacity: 0.3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: thread-knot-spin 6s linear infinite;
+}
+
+.thread-knot circle {
+  fill: rgba(245, 230, 192, 0.16);
+  stroke: rgba(218, 185, 130, 0.42);
+  stroke-width: 1.1px;
+}
+
+.thread-knot path {
+  fill: none;
+  stroke: rgba(255, 235, 180, 0.58);
+  stroke-width: 1px;
+  stroke-dasharray: 2.2 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(245, 230, 192, 0.25));
+}
+
+.weather-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 .constellation-field {
@@ -1203,7 +1303,7 @@ body.has-webgl-ink::before {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: #faf6f0;
+  background: #dfeffc;
   overflow: hidden;
 }
 
@@ -1214,7 +1314,7 @@ body.has-webgl-ink::before {
   height: 100%;
   pointer-events: none;
   display: block;
-  background: #faf6f0;
+  background: #dfeffc;
 }
 
 .ambient-breathe {
@@ -1334,6 +1434,16 @@ body.reduced-motion .particle-canvas {
   50% {
     opacity: 1;
     transform: scale(1.02);
+  }
+}
+
+@keyframes thread-knot-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 

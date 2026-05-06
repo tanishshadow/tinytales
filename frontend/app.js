@@ -31,6 +31,7 @@
     lastWheelAt: 0,
     lastScrollInputAt: 0,
     constellation: null,
+    weatherMode: "morning",
     geometryCache: new WeakMap(),
     layoutRefreshScheduled: false,
     interactionTraceEnabled: true,
@@ -62,6 +63,8 @@
   const depthMotes = [];
   const cachedElements = new Set();
   const scheduledFrameTasks = new WeakMap();
+
+  function setInkModeBadge() { }
 
   function deferTask(task) {
     if (win.scheduler && typeof win.scheduler.postTask === "function") {
@@ -156,6 +159,12 @@
         if (morphSvgModels.length) {
           rebuildMorphBuckets();
         }
+        if (state.sectionBleeds && state.sectionBleeds.refreshPositions) {
+          state.sectionBleeds.refreshPositions();
+        }
+        if (state.narrativeThread && state.narrativeThread.refreshLayout) {
+          state.narrativeThread.refreshLayout();
+        }
       }
     }
 
@@ -216,6 +225,44 @@
 
   function mix(a, b, amount) {
     return a + (b - a) * amount;
+  }
+
+  function hashString(value) {
+    let hash = 2166136261;
+    const input = String(value || "");
+    for (let index = 0; index < input.length; index += 1) {
+      hash ^= input.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function createSeededRandom(seed) {
+    let stateValue = seed >>> 0;
+    return () => {
+      stateValue += 0x6D2B79F5;
+      let next = Math.imul(stateValue ^ (stateValue >>> 15), 1 | stateValue);
+      next ^= next + Math.imul(next ^ (next >>> 7), 61 | next);
+      return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function scheduleIdleWork(task) {
+    if (typeof win.requestIdleCallback === "function") {
+      return win.requestIdleCallback(task, { timeout: 120 });
+    }
+    return win.setTimeout(() => task({ didTimeout: true, timeRemaining: () => 0 }), 24);
+  }
+
+  function cancelIdleWork(handle) {
+    if (!handle) {
+      return;
+    }
+    if (typeof win.cancelIdleCallback === "function") {
+      win.cancelIdleCallback(handle);
+      return;
+    }
+    win.clearTimeout(handle);
   }
 
   function noise2D(x, y) {
@@ -1310,19 +1357,19 @@
     const lightSources = [
       heroRect
         ? {
-            x: heroRect.left + heroRect.width * (0.78 + cursorMix * 0.06),
-            y: heroRect.top + heroRect.height * 0.08,
-            radius: state.viewportWidth * 0.52,
-            angle: cursorMix * 20,
-          }
+          x: heroRect.left + heroRect.width * (0.78 + cursorMix * 0.06),
+          y: heroRect.top + heroRect.height * 0.08,
+          radius: state.viewportWidth * 0.52,
+          angle: cursorMix * 20,
+        }
         : null,
       quoteRect
         ? {
-            x: quoteRect.left + quoteRect.width * 0.52,
-            y: quoteRect.top + quoteRect.height * 0.16,
-            radius: state.viewportWidth * 0.34,
-            angle: -8,
-          }
+          x: quoteRect.left + quoteRect.width * 0.52,
+          y: quoteRect.top + quoteRect.height * 0.16,
+          radius: state.viewportWidth * 0.34,
+          angle: -8,
+        }
         : null,
     ].filter(Boolean);
 
@@ -1417,8 +1464,10 @@
   function createInkStage() {
     const stage = doc.createElement("div");
     stage.className = "ink-stage";
+    stage.style.background = "#dfeffc";
     const canvas = doc.createElement("canvas");
     canvas.className = "ink-canvas";
+    canvas.style.background = "#dfeffc";
     stage.appendChild(canvas);
     body.insertBefore(stage, body.firstChild);
     return { stage, canvas };
@@ -1426,6 +1475,7 @@
 
   function createInkFallback() {
     if (reducedMotion || !body.classList.contains("has-gradient-motion")) {
+      setInkModeBadge("off");
       return null;
     }
 
@@ -1436,8 +1486,10 @@
     if (!ctx) {
       stage.remove();
       body.classList.remove("has-webgl-ink");
+      setInkModeBadge("off");
       return null;
     }
+    setInkModeBadge("fallback");
 
     const palette = [
       "242,196,206",
@@ -1484,7 +1536,7 @@
       const width = state.viewportWidth;
       const height = state.viewportHeight;
       const scrollMix = state.maxScroll > 0 ? clamp(state.currentScroll / state.maxScroll, 0, 1) : 0;
-      ctx.fillStyle = "#faf6f0";
+      ctx.fillStyle = "#dfeffc";
       ctx.fillRect(0, 0, width, height);
 
       blobs.forEach((blob, index) => {
@@ -1553,6 +1605,7 @@
 
   function createInkSimulation() {
     if (reducedMotion || !body.classList.contains("has-gradient-motion")) {
+      setInkModeBadge("off");
       return null;
     }
 
@@ -1566,6 +1619,7 @@
     if (!gl) {
       stage.remove();
       body.classList.remove("has-webgl-ink");
+      setInkModeBadge("fallback");
       return createInkFallback();
     }
 
@@ -1577,8 +1631,10 @@
     if (!halfFloatExt) {
       stage.remove();
       body.classList.remove("has-webgl-ink");
+      setInkModeBadge("fallback");
       return createInkFallback();
     }
+    setInkModeBadge("webgl");
 
     const textureType = isWebGL2 ? gl.HALF_FLOAT : halfFloatExt.HALF_FLOAT_OES;
     const textureFormat = isWebGL2 ? gl.RGBA16F : gl.RGBA;
@@ -1988,7 +2044,7 @@
     let viewportActive = true;
     let intersectionObserver = null;
     const cursorColor = [0.892, 0.643, 0.855];
-    const baseColor = [0.980, 0.965, 0.941];
+    const baseColor = [0.91, 0.945, 0.973];
     const palette = [
       [0.949, 0.769, 0.808],
       [0.722, 0.894, 0.863],
@@ -2391,6 +2447,7 @@
 
   function createOpaqueInkFallback() {
     if (reducedMotion || !body.classList.contains("has-gradient-motion")) {
+      setInkModeBadge("off");
       return null;
     }
 
@@ -2400,6 +2457,7 @@
     const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) {
       stage.remove();
+      setInkModeBadge("off");
       return null;
     }
 
@@ -2407,6 +2465,7 @@
     const simCtx = simCanvas.getContext("2d", { alpha: false });
     if (!simCtx) {
       stage.remove();
+      setInkModeBadge("off");
       return null;
     }
 
@@ -2435,6 +2494,7 @@
       }
       activated = true;
       body.classList.add("has-webgl-ink");
+      setInkModeBadge("fallback");
     }
 
     function applyResize() {
@@ -2463,13 +2523,13 @@
         ? clamp(state.currentScroll / state.maxScroll, 0, 1)
         : 0;
 
-      ctx.fillStyle = "#faf6f0";
+      ctx.fillStyle = "#dfeffc";
       ctx.fillRect(0, 0, width, height);
 
       simCtx.globalCompositeOperation = "source-over";
-      simCtx.fillStyle = "#faf6f0";
+      simCtx.fillStyle = "#dfeffc";
       simCtx.fillRect(0, 0, simCanvas.width, simCanvas.height);
-      simCtx.globalCompositeOperation = "soft-light";
+      simCtx.globalCompositeOperation = "source-over";
 
       blobs.forEach((blob, index) => {
         const x =
@@ -2487,8 +2547,8 @@
           y,
           radius
         );
-        gradient.addColorStop(0, `rgba(${blob.color[0]}, ${blob.color[1]}, ${blob.color[2]}, 0.4)`);
-        gradient.addColorStop(0.52, `rgba(${blob.color[0]}, ${blob.color[1]}, ${blob.color[2]}, 0.16)`);
+        gradient.addColorStop(0, `rgba(${blob.color[0]}, ${blob.color[1]}, ${blob.color[2]}, 0.72)`);
+        gradient.addColorStop(0.52, `rgba(${blob.color[0]}, ${blob.color[1]}, ${blob.color[2]}, 0.38)`);
         gradient.addColorStop(1, `rgba(${blob.color[0]}, ${blob.color[1]}, ${blob.color[2]}, 0)`);
         simCtx.fillStyle = gradient;
         simCtx.beginPath();
@@ -2496,7 +2556,9 @@
         simCtx.fill();
       });
 
+      ctx.globalCompositeOperation = "multiply";
       ctx.drawImage(simCanvas, 0, 0, width, height);
+      ctx.globalCompositeOperation = "source-over";
       activateOnce();
     }
 
@@ -2508,6 +2570,7 @@
       win.removeEventListener("resize", onResize);
       stage.remove();
       body.classList.remove("has-webgl-ink");
+      setInkModeBadge("off");
     }
 
     win.addEventListener("resize", onResize);
@@ -2524,6 +2587,7 @@
 
   function createOpaqueInkSimulation() {
     if (reducedMotion || !body.classList.contains("has-gradient-motion")) {
+      setInkModeBadge("off");
       return null;
     }
 
@@ -2575,7 +2639,6 @@
     let disposed = false;
     let contextLost = false;
     let visibilityPaused = false;
-    let hasActivated = false;
     let scale = 0.125;
     let injectionStride = 3;
     let simWidth = 0;
@@ -2694,9 +2757,12 @@
       varying vec2 v_uv;
       uniform sampler2D u_dye;
       void main() {
-        vec3 base = vec3(0.98, 0.965, 0.941);
+        vec3 base = vec3(0.875, 0.937, 0.988);
         vec3 dye = texture2D(u_dye, v_uv).rgb;
-        vec3 result = mix(base, base * (1.0 + (dye - 0.5) * 0.7), 0.55);
+        float strength = smoothstep(0.005, 0.55, length(dye));
+        vec3 washed = base * (1.0 + dye * 1.45);
+        vec3 result = mix(base, washed, strength * 0.92);
+        result = mix(result, dye, strength * 0.28);
         float grain = fract(sin(dot(v_uv * 800.0, vec2(12.9898, 78.233))) * 43758.5453) * 0.04;
         result += grain - 0.02;
         gl_FragColor = vec4(clamp(result, 0.0, 1.0), 1.0);
@@ -2871,14 +2937,6 @@
       divergence = null;
     }
 
-    function activateOnce() {
-      if (hasActivated) {
-        return;
-      }
-      hasActivated = true;
-      body.classList.add("has-webgl-ink");
-    }
-
     function resizeFramebuffers() {
       const nextWidth = Math.max(1, Math.round(state.viewportWidth * scale));
       const nextHeight = Math.max(1, Math.round(state.viewportHeight * scale));
@@ -2915,11 +2973,12 @@
 
       clearTarget(velocity.read, 0, 0, 0);
       clearTarget(velocity.write, 0, 0, 0);
-      clearTarget(dye.read, 0.5, 0.5, 0.5);
-      clearTarget(dye.write, 0.5, 0.5, 0.5);
+      clearTarget(dye.read, 0, 0, 0);
+      clearTarget(dye.write, 0, 0, 0);
       clearTarget(pressure.read, 0, 0, 0);
       clearTarget(pressure.write, 0, 0, 0);
       clearTarget(divergence, 0, 0, 0);
+      seedInitialInk();
     }
 
     function drawTo(target, width, height) {
@@ -2982,28 +3041,50 @@
       }
 
       const splatCount = frameCounter % (injectionStride * 2) === 0 ? 2 : 1;
-      const baseRadius = mix(50, 30, scrollMix);
+      const baseRadius = mix(62, 38, scrollMix);
       for (let index = 0; index < splatCount; index += 1) {
         const emitter = emitters[(frameCounter + index) % emitters.length];
         const x = clamp(
           0.5 +
-            Math.sin(time * 0.0004 + emitter.seed) * 0.3 +
-            Math.sin(time * 0.00017 + emitter.phase) * 0.08,
+          Math.sin(time * 0.0004 + emitter.seed) * 0.3 +
+          Math.sin(time * 0.00017 + emitter.phase) * 0.08,
           0.08,
           0.92
         );
         const y = clamp(
           0.5 +
-            Math.cos(time * 0.0003 + emitter.phase) * 0.2 +
-            Math.sin(time * 0.00021 + emitter.seed) * 0.06,
+          Math.cos(time * 0.0003 + emitter.phase) * 0.2 +
+          Math.sin(time * 0.00021 + emitter.seed) * 0.06,
           0.08,
           0.92
         );
-        const radius = Math.max(20, baseRadius + Math.sin(time * 0.0001 + index) * 8);
+        const radius = Math.max(28, baseRadius + Math.sin(time * 0.0001 + index) * 10);
         const velocityX = Math.sin(time * 0.00037 + emitter.seed) * 1.2;
         const velocityY = Math.cos(time * 0.00028 + emitter.phase) * 1.2;
         applySplat(dye, x, y, palette[(emitter.hue + index) % palette.length], radius);
         applySplat(velocity, x, y, [velocityX, velocityY, 0.0], radius * 0.8);
+      }
+    }
+
+    function seedInitialInk() {
+      for (let index = 0; index < emitters.length + 3; index += 1) {
+        const emitter = emitters[index % emitters.length];
+        const x = 0.14 + ((index * 0.17) % 0.72);
+        const y = 0.18 + (((index * 0.21) + 0.09) % 0.58);
+        const radius = 38 + index * 10;
+        const color = palette[(emitter.hue + index) % palette.length];
+        applySplat(dye, x, y, color, radius);
+        applySplat(
+          velocity,
+          x,
+          y,
+          [
+            Math.sin(index * 1.7) * 1.2,
+            Math.cos(index * 1.3) * 1.2,
+            0.0,
+          ],
+          radius * 0.85
+        );
       }
     }
 
@@ -3046,12 +3127,11 @@
     function renderComposite() {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clearColor(0.98, 0.965, 0.941, 1.0);
+      gl.clearColor(0.875, 0.937, 0.988, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       bindPass(passes.composite);
       bindTexture(dye.read.texture, 0, passes.composite.uniforms.u_dye);
       drawTo(null, canvas.width, canvas.height);
-      activateOnce();
     }
 
     const onResize = debounce(() => {
@@ -3090,6 +3170,7 @@
       gl.deleteBuffer(quadBuffer);
       stage.remove();
       body.classList.remove("has-webgl-ink");
+      setInkModeBadge("off");
     }
 
     win.addEventListener("resize", onResize);
@@ -3101,6 +3182,8 @@
 
     try {
       resizeFramebuffers();
+      body.classList.add("has-webgl-ink");
+      setInkModeBadge("webgl");
     } catch (error) {
       destroy();
       return createOpaqueInkFallback();
@@ -3174,6 +3257,15 @@
     syncShellHeight();
     if (state.depthScene && state.depthScene.resizeCanvases) {
       state.depthScene.resizeCanvases();
+    }
+    if (state.sectionBleeds && state.sectionBleeds.rebuild) {
+      state.sectionBleeds.rebuild();
+    }
+    if (state.narrativeThread && state.narrativeThread.refreshLayout) {
+      state.narrativeThread.refreshLayout();
+    }
+    if (state.storyWeather && state.storyWeather.refresh) {
+      state.storyWeather.refresh();
     }
     scheduleLayoutRefresh();
   }
@@ -3520,12 +3612,1391 @@
     });
   }
 
+  function setupSectionBleeds() {
+    if (reducedMotion || !siteShell) {
+      return;
+    }
+
+    if (state.sectionBleeds && state.sectionBleeds.destroy) {
+      state.sectionBleeds.destroy();
+    }
+
+    const main = siteShell.querySelector("main");
+    if (!(main instanceof HTMLElement)) {
+      return;
+    }
+
+    const sectionNodes = Array.from(main.children).filter((element) => element instanceof HTMLElement);
+    if (sectionNodes.length < 2) {
+      return;
+    }
+
+    const colorTokens = {
+      hero: [242, 196, 206],
+      features: [184, 228, 220],
+      detail: [184, 228, 220],
+      quote: [217, 200, 232],
+      contact: [245, 230, 192],
+      page: [168, 216, 216],
+    };
+    const bleedHeight = 280;
+    const bleedStates = [];
+    let disposed = false;
+    let observer = null;
+    let idleHandles = [];
+
+    const layer = doc.createElement("div");
+    layer.className = "section-bleeds";
+    siteShell.insertBefore(layer, siteShell.firstChild);
+
+    const getSectionRole = (section) => {
+      if (!(section instanceof HTMLElement)) {
+        return "page";
+      }
+      if (section.matches(".hero, .subpage-hero")) {
+        return "hero";
+      }
+      if (section.matches(".features")) {
+        return "features";
+      }
+      if (section.matches(".detail-section")) {
+        return "detail";
+      }
+      if (section.matches(".quote-band")) {
+        return "quote";
+      }
+      if (section.matches(".contact")) {
+        return "contact";
+      }
+      return "page";
+    };
+
+    const getBoundaryColorPair = (upperSection, lowerSection) => {
+      const upperRole = getSectionRole(upperSection);
+      const lowerRole = getSectionRole(lowerSection);
+      return [
+        colorTokens[upperRole] || colorTokens.page,
+        colorTokens[lowerRole] || colorTokens.page,
+      ];
+    };
+
+    const collectBoundaries = () => {
+      const boundaries = [];
+      for (let index = 0; index < sectionNodes.length - 1; index += 1) {
+        const upper = sectionNodes[index];
+        const lower = sectionNodes[index + 1];
+        const upperRect = upper.getBoundingClientRect();
+        const lowerRect = lower.getBoundingClientRect();
+        const upperBottom = upperRect.bottom + state.currentScroll;
+        const lowerTop = lowerRect.top + state.currentScroll;
+        const rule = lower.querySelector(".section-rule");
+        let centerY = (upperBottom + lowerTop) * 0.5;
+
+        if (rule instanceof HTMLElement) {
+          const ruleRect = rule.getBoundingClientRect();
+          centerY = ruleRect.top + state.currentScroll + ruleRect.height * 0.5;
+        } else if (lower.classList.contains("quote-band")) {
+          centerY = lowerTop;
+        } else if (upper.classList.contains("quote-band")) {
+          centerY = upperBottom;
+        }
+
+        boundaries.push({
+          id: `${upper.className}->${lower.className}-${index}`,
+          upper,
+          lower,
+          centerY,
+          colors: getBoundaryColorPair(upper, lower),
+        });
+      }
+      return boundaries;
+    };
+
+    const boundaries = collectBoundaries();
+    if (!boundaries.length) {
+      layer.remove();
+      return;
+    }
+
+    const setLayerHeight = () => {
+      const shellHeight = Math.max(siteShell.scrollHeight, siteShell.getBoundingClientRect().height);
+      layer.style.height = `${Math.ceil(shellHeight)}px`;
+    };
+
+    const createIntensityBuffer = (width, height) => new Uint8ClampedArray(width * height);
+
+    const depositSoftCircle = (buffer, width, height, centerX, centerY, radius, amount) => {
+      const minX = Math.max(0, Math.floor(centerX - radius));
+      const maxX = Math.min(width - 1, Math.ceil(centerX + radius));
+      const minY = Math.max(0, Math.floor(centerY - radius));
+      const maxY = Math.min(height - 1, Math.ceil(centerY + radius));
+      const radiusSq = radius * radius;
+
+      for (let y = minY; y <= maxY; y += 1) {
+        for (let x = minX; x <= maxX; x += 1) {
+          const dx = x - centerX;
+          const dy = y - centerY;
+          const distSq = dx * dx + dy * dy;
+          if (distSq > radiusSq) {
+            continue;
+          }
+          const influence = 1 - distSq / Math.max(radiusSq, 1);
+          const nextValue = buffer[y * width + x] + amount * influence * influence;
+          buffer[y * width + x] = Math.max(0, Math.min(255, Math.round(nextValue)));
+        }
+      }
+    };
+
+    const createCanvas = (width, height) => {
+      const canvas = doc.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      return canvas;
+    };
+
+    const blurAlphaCanvas = (sourceCanvas, width, height) => {
+      const passA = createCanvas(width, height);
+      const passB = createCanvas(width, height);
+      const passACtx = passA.getContext("2d");
+      const passBCtx = passB.getContext("2d");
+      if (!passACtx || !passBCtx) {
+        return sourceCanvas;
+      }
+
+      passACtx.clearRect(0, 0, width, height);
+      passACtx.filter = "blur(12px)";
+      passACtx.drawImage(sourceCanvas, 0, 0);
+      passACtx.filter = "none";
+
+      passBCtx.clearRect(0, 0, width, height);
+      passBCtx.filter = "blur(12px)";
+      passBCtx.drawImage(passA, 0, 0);
+      passBCtx.filter = "none";
+      return passB;
+    };
+
+    const buildAlphaMap = (buffer, width, height) => {
+      const alphaCanvas = createCanvas(width, height);
+      const alphaCtx = alphaCanvas.getContext("2d");
+      if (!alphaCtx) {
+        return { alphaCanvas, alphaData: null };
+      }
+
+      const image = alphaCtx.createImageData(width, height);
+      for (let index = 0; index < buffer.length; index += 1) {
+        image.data[index * 4 + 3] = buffer[index];
+      }
+      alphaCtx.putImageData(image, 0, 0);
+      const blurred = blurAlphaCanvas(alphaCanvas, width, height);
+      const blurredCtx = blurred.getContext("2d");
+      if (!blurredCtx) {
+        return { alphaCanvas: blurred, alphaData: null };
+      }
+
+      const blurredImage = blurredCtx.getImageData(0, 0, width, height);
+      const alphaData = new Uint8ClampedArray(width * height);
+      const centerY = height * 0.5;
+      const sigma = 60;
+      for (let y = 0; y < height; y += 1) {
+        const gaussian = Math.exp(-Math.pow(y - centerY, 2) / (2 * sigma * sigma));
+        for (let x = 0; x < width; x += 1) {
+          const index = y * width + x;
+          const alpha = blurredImage.data[index * 4 + 3];
+          alphaData[index] = Math.round(alpha * gaussian);
+        }
+      }
+      return { alphaCanvas: blurred, alphaData };
+    };
+
+    const buildEdgePoints = (alphaData, width, height) => {
+      const points = [];
+      if (!alphaData) {
+        return points;
+      }
+
+      for (let y = 6; y < height - 6; y += 4) {
+        for (let x = 6; x < width - 6; x += 5) {
+          const index = y * width + x;
+          const alpha = alphaData[index];
+          if (alpha < 22) {
+            continue;
+          }
+          if (
+            alphaData[index - 1] < 18 ||
+            alphaData[index + 1] < 18 ||
+            alphaData[index - width] < 18 ||
+            alphaData[index + width] < 18
+          ) {
+            points.push({ x, y });
+          }
+        }
+      }
+
+      return points;
+    };
+
+    const buildTendrils = (edgePoints, colors, random) => {
+      if (!edgePoints.length) {
+        return [];
+      }
+
+      const tendrils = [];
+      const tendrilCount = 8 + Math.floor(random() * 8);
+      for (let index = 0; index < tendrilCount; index += 1) {
+        const start = edgePoints[Math.floor(random() * edgePoints.length)];
+        if (!start) {
+          continue;
+        }
+        const outward = start.y < bleedHeight * 0.5 ? -1 : 1;
+        const length = 40 + random() * 80;
+        const endX = start.x + (random() * 2 - 1) * 70;
+        const endY = start.y + outward * length;
+        tendrils.push({
+          startX: start.x,
+          startY: start.y,
+          cp1X: start.x + (random() * 2 - 1) * 24,
+          cp1Y: start.y + outward * (14 + random() * 24),
+          cp2X: endX + (random() * 2 - 1) * 28,
+          cp2Y: start.y + outward * (28 + random() * 40),
+          endX,
+          endY,
+          width: 1 + random() * 2,
+          color: start.y < bleedHeight * 0.5 ? colors[0] : colors[1],
+          layerIndex: Math.min(4, Math.floor(random() * 5)),
+        });
+      }
+      return tendrils;
+    };
+
+    const colorizeAlpha = (alphaData, width, height, colors, seedKey) => {
+      const image = new ImageData(width, height);
+      const upperColor = colors[0];
+      const lowerColor = colors[1];
+
+      for (let y = 0; y < height; y += 1) {
+        const blendBase = smoothstep(0.15, 0.85, y / Math.max(height - 1, 1));
+        for (let x = 0; x < width; x += 1) {
+          const index = y * width + x;
+          const alpha = alphaData[index];
+          if (alpha <= 1) {
+            continue;
+          }
+
+          const noise = noise2D(x * 0.018 + seedKey, y * 0.024 + seedKey * 0.37);
+          const blend = clamp(blendBase + (noise - 0.5) * 0.28, 0, 1);
+          const pixelIndex = index * 4;
+          image.data[pixelIndex] = Math.round(mix(upperColor[0], lowerColor[0], blend));
+          image.data[pixelIndex + 1] = Math.round(mix(upperColor[1], lowerColor[1], blend));
+          image.data[pixelIndex + 2] = Math.round(mix(upperColor[2], lowerColor[2], blend));
+          image.data[pixelIndex + 3] = Math.round(alpha * 0.82);
+        }
+      }
+
+      const floorBand = 7;
+      for (let x = 0; x < width; x += 1) {
+        let lowestY = -1;
+        for (let y = height - 1; y >= 0; y -= 1) {
+          if (alphaData[y * width + x] > 26) {
+            lowestY = y;
+            break;
+          }
+        }
+        if (lowestY < 0) {
+          continue;
+        }
+        for (let offset = 0; offset < floorBand; offset += 1) {
+          const y = Math.min(height - 1, lowestY + offset);
+          const pixelIndex = (y * width + x) * 4;
+          image.data[pixelIndex] = Math.round(image.data[pixelIndex] * 0.8);
+          image.data[pixelIndex + 1] = Math.round(image.data[pixelIndex + 1] * 0.8);
+          image.data[pixelIndex + 2] = Math.round(image.data[pixelIndex + 2] * 0.8);
+          image.data[pixelIndex + 3] = Math.min(255, image.data[pixelIndex + 3] + 26);
+        }
+      }
+
+      return image;
+    };
+
+    const drawTendrils = (ctx, tendrils, layerIndex) => {
+      tendrils.forEach((tendril) => {
+        if (tendril.layerIndex > layerIndex) {
+          return;
+        }
+        const gradient = ctx.createLinearGradient(
+          tendril.startX,
+          tendril.startY,
+          tendril.endX,
+          tendril.endY
+        );
+        gradient.addColorStop(0, `rgba(${tendril.color[0]}, ${tendril.color[1]}, ${tendril.color[2]}, 0.3)`);
+        gradient.addColorStop(1, `rgba(${tendril.color[0]}, ${tendril.color[1]}, ${tendril.color[2]}, 0)`);
+        ctx.lineWidth = tendril.width;
+        ctx.strokeStyle = gradient;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(tendril.startX, tendril.startY);
+        ctx.bezierCurveTo(
+          tendril.cp1X,
+          tendril.cp1Y,
+          tendril.cp2X,
+          tendril.cp2Y,
+          tendril.endX,
+          tendril.endY
+        );
+        ctx.stroke();
+      });
+    };
+
+    const createStain = (boundary, index) => {
+      const canvas = doc.createElement("canvas");
+      canvas.className = "section-bleed";
+      canvas.width = Math.max(1, Math.round(state.viewportWidth));
+      canvas.height = bleedHeight;
+      canvas.style.height = `${bleedHeight}px`;
+      layer.appendChild(canvas);
+
+      const ctx = canvas.getContext("2d");
+      const seedBase = hashString(`${boundary.id}:${index}:${doc.title}`);
+      return {
+        boundary,
+        index,
+        canvas,
+        ctx,
+        seedBase,
+        width: canvas.width,
+        height: bleedHeight,
+        stageCanvases: [],
+        generated: false,
+        entered: false,
+        startedAt: 0,
+        progress: 0,
+        rafId: 0,
+        completed: false,
+      };
+    };
+
+    const positionStain = (stain, boundary) => {
+      const nextWidth = Math.max(1, Math.round(state.viewportWidth));
+      if (stain.canvas.width !== nextWidth) {
+        stain.canvas.width = nextWidth;
+      }
+      stain.width = stain.canvas.width;
+      stain.canvas.style.width = `${state.viewportWidth}px`;
+      stain.canvas.style.left = "50%";
+      stain.canvas.style.top = `${Math.round(boundary.centerY - bleedHeight * 0.5)}px`;
+    };
+
+    const drawStage = (stain, progress) => {
+      if (!stain.ctx || !stain.stageCanvases.length) {
+        return;
+      }
+
+      const stageCount = stain.stageCanvases.length;
+      const stageProgress = clamp(progress, 0, 1) * stageCount;
+      const baseIndex = Math.max(0, Math.min(stageCount - 1, Math.floor(stageProgress)));
+      const nextIndex = Math.min(stageCount - 1, baseIndex + 1);
+      const blend = stageProgress - baseIndex;
+      const scale = mix(0.3, 1, easeOutCubic(clamp(progress, 0, 1)));
+
+      stain.ctx.clearRect(0, 0, stain.width, stain.height);
+      stain.ctx.save();
+      stain.ctx.translate(stain.width * 0.5, stain.height * 0.5);
+      stain.ctx.scale(scale, scale);
+      stain.ctx.translate(-stain.width * 0.5, -stain.height * 0.5);
+      stain.ctx.globalAlpha = 1;
+      stain.ctx.drawImage(stain.stageCanvases[baseIndex], 0, 0);
+      if (blend > 0.02 && nextIndex !== baseIndex) {
+        stain.ctx.globalAlpha = blend;
+        stain.ctx.drawImage(stain.stageCanvases[nextIndex], 0, 0);
+      }
+      stain.ctx.restore();
+    };
+
+    const animateStain = (stain, now) => {
+      if (disposed || !stain.generated) {
+        return;
+      }
+
+      if (!stain.startedAt) {
+        stain.startedAt = now;
+      }
+
+      const elapsed = now - stain.startedAt;
+      stain.progress = clamp(elapsed / 1500, 0, 1);
+      drawStage(stain, stain.progress);
+
+      if (stain.progress >= 1) {
+        stain.completed = true;
+        stain.rafId = 0;
+        return;
+      }
+
+      stain.rafId = requestAnimationFrame((time) => animateStain(stain, time));
+    };
+
+    const startStain = (stain) => {
+      if (stain.completed || stain.rafId || !stain.generated) {
+        return;
+      }
+      stain.rafId = requestAnimationFrame((time) => animateStain(stain, time));
+    };
+
+    const generateStainArt = (stain) => {
+      const width = stain.width;
+      const height = stain.height;
+      const size = width * height;
+      const random = createSeededRandom(stain.seedBase);
+      const layerBuffers = Array.from({ length: 5 }, () => createIntensityBuffer(width, height));
+      const cumulativeBuffers = Array.from({ length: 5 }, () => createIntensityBuffer(width, height));
+      const cumulativeScratch = new Uint16Array(size);
+      const seedCount = 3 + Math.floor(random() * 4);
+      const centerBand = height * 0.5;
+
+      for (let seedIndex = 0; seedIndex < seedCount; seedIndex += 1) {
+        let x = width * (0.16 + random() * 0.68);
+        let y = centerBand + (random() * 2 - 1) * 16;
+        const steps = 800 + Math.floor(random() * 1200);
+        for (let step = 0; step < steps; step += 1) {
+          const layerIndex = Math.min(4, Math.floor((step / Math.max(steps - 1, 1)) * 5));
+          const radius = 4 + random() * 4;
+          const amount = 255 * (0.15 + random() * 0.25);
+          depositSoftCircle(layerBuffers[layerIndex], width, height, x, y, radius, amount);
+
+          if (random() < 0.6) {
+            x += (random() < 0.5 ? -1 : 1) * (1 + random() * 3.4);
+            y += (random() < 0.55 ? 1 : -1) * random() * 1.4;
+          } else {
+            x += (random() * 2 - 1) * 1.5;
+            y += (random() < 0.55 ? 1 : -1) * (1 + random() * 3.2);
+          }
+
+          x = clamp(x, width * 0.05, width * 0.95);
+          y = clamp(y, height * 0.16, height * 0.84);
+        }
+      }
+
+      for (let layerIndex = 0; layerIndex < cumulativeBuffers.length; layerIndex += 1) {
+        for (let pixelIndex = 0; pixelIndex < size; pixelIndex += 1) {
+          cumulativeScratch[pixelIndex] = Math.min(
+            255,
+            cumulativeScratch[pixelIndex] + layerBuffers[layerIndex][pixelIndex]
+          );
+          cumulativeBuffers[layerIndex][pixelIndex] = cumulativeScratch[pixelIndex];
+        }
+      }
+
+      const finalAlphaMap = buildAlphaMap(cumulativeBuffers[cumulativeBuffers.length - 1], width, height);
+      const edgePoints = buildEdgePoints(finalAlphaMap.alphaData, width, height);
+      const tendrils = buildTendrils(edgePoints, stain.boundary.colors, random);
+      const stageCanvases = [];
+
+      for (let layerIndex = 0; layerIndex < cumulativeBuffers.length; layerIndex += 1) {
+        const stageCanvas = createCanvas(width, height);
+        const stageCtx = stageCanvas.getContext("2d");
+        const alphaMap = buildAlphaMap(cumulativeBuffers[layerIndex], width, height);
+        if (!stageCtx || !alphaMap.alphaData) {
+          continue;
+        }
+
+        const image = colorizeAlpha(
+          alphaMap.alphaData,
+          width,
+          height,
+          stain.boundary.colors,
+          stain.seedBase * 0.001 + layerIndex * 13
+        );
+        stageCtx.putImageData(image, 0, 0);
+        stageCtx.globalCompositeOperation = "multiply";
+        drawTendrils(stageCtx, tendrils, layerIndex);
+        stageCtx.globalCompositeOperation = "source-over";
+        stageCanvases.push(stageCanvas);
+      }
+
+      stain.stageCanvases = stageCanvases;
+      stain.generated = stageCanvases.length > 0;
+      stain.completed = false;
+      stain.progress = 0;
+      drawStage(stain, 0);
+      if (stain.entered) {
+        startStain(stain);
+      }
+    };
+
+    boundaries.forEach((boundary, index) => {
+      const stain = createStain(boundary, index);
+      positionStain(stain, boundary);
+      bleedStates.push(stain);
+    });
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const stain = bleedStates.find((item) => item.canvas === entry.target);
+          if (!stain) {
+            return;
+          }
+          stain.entered = entry.isIntersecting && entry.intersectionRatio >= 0.3;
+          if (stain.entered) {
+            startStain(stain);
+          }
+        });
+      },
+      { threshold: [0.3] }
+    );
+
+    bleedStates.forEach((stain) => observer.observe(stain.canvas));
+
+    const queueGeneration = (index) => {
+      if (disposed || index >= bleedStates.length) {
+        return;
+      }
+      const handle = scheduleIdleWork(() => {
+        idleHandles = idleHandles.filter((entry) => entry !== handle);
+        if (disposed) {
+          return;
+        }
+        generateStainArt(bleedStates[index]);
+        queueGeneration(index + 1);
+      });
+      idleHandles.push(handle);
+    };
+
+    const refreshPositions = () => {
+      if (disposed) {
+        return;
+      }
+      const nextBoundaries = collectBoundaries();
+      setLayerHeight();
+      bleedStates.forEach((stain, index) => {
+        const nextBoundary = nextBoundaries[index] || stain.boundary;
+        stain.boundary = nextBoundary;
+        positionStain(stain, nextBoundary);
+      });
+    };
+
+    const rebuild = debounce(() => {
+      if (disposed) {
+        return;
+      }
+      idleHandles.forEach(cancelIdleWork);
+      idleHandles = [];
+      bleedStates.forEach((stain) => {
+        if (stain.rafId) {
+          cancelAnimationFrame(stain.rafId);
+          stain.rafId = 0;
+        }
+        stain.generated = false;
+        stain.stageCanvases = [];
+        stain.completed = false;
+        stain.startedAt = 0;
+      });
+      refreshPositions();
+      queueGeneration(0);
+    }, 120);
+
+    setLayerHeight();
+    queueGeneration(0);
+
+    state.sectionBleeds = {
+      refreshPositions,
+      rebuild,
+      destroy() {
+        if (disposed) {
+          return;
+        }
+        disposed = true;
+        if (observer) {
+          observer.disconnect();
+        }
+        idleHandles.forEach(cancelIdleWork);
+        idleHandles = [];
+        bleedStates.forEach((stain) => {
+          if (stain.rafId) {
+            cancelAnimationFrame(stain.rafId);
+          }
+        });
+        state.sectionBleeds = null;
+        layer.remove();
+      },
+    };
+  }
+
+  function setupNarrativeThread() {
+    if (!siteShell) {
+      return;
+    }
+
+    if (state.narrativeThread && state.narrativeThread.destroy) {
+      state.narrativeThread.destroy();
+    }
+
+    const main = siteShell.querySelector("main");
+    if (!(main instanceof HTMLElement)) {
+      return;
+    }
+
+    const sections = Array.from(main.children).filter((element) => element instanceof HTMLElement);
+    if (!sections.length) {
+      return;
+    }
+
+    const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add("narrative-thread");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("preserveAspectRatio", "none");
+
+    const deepGlow = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    deepGlow.classList.add("thread-path", "thread-path-deep");
+    const glow = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    glow.classList.add("thread-path", "thread-path-glow");
+    const mainPath = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    mainPath.classList.add("thread-path", "thread-path-main");
+    const pulsePath = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    pulsePath.classList.add("thread-path", "thread-path-pulse");
+
+    const knotLayer = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+    knotLayer.classList.add("thread-knot-layer");
+
+    svg.appendChild(deepGlow);
+    svg.appendChild(glow);
+    svg.appendChild(mainPath);
+    svg.appendChild(pulsePath);
+    svg.appendChild(knotLayer);
+    siteShell.insertBefore(svg, siteShell.firstChild);
+
+    const pathElements = [deepGlow, glow, mainPath, pulsePath];
+    const anchorModels = [];
+    const knotModels = [];
+    let pathLength = 1;
+    let pageHeight = Math.max(siteShell.scrollHeight, siteShell.getBoundingClientRect().height);
+    let dprAwareWidth = Math.max(1, state.viewportWidth);
+    let lastShapeUpdateAt = 0;
+    let lastScrollReveal = -1;
+    let lastMouseX = state.mouseX;
+    let lastMouseY = state.mouseY;
+    let reducedThreadMotion = reducedMotion;
+    let disposed = false;
+
+    const createKnot = () => {
+      const group = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+      group.classList.add("thread-knot");
+      const ring = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
+      ring.setAttribute("r", "6");
+      ring.setAttribute("cx", "0");
+      ring.setAttribute("cy", "0");
+      const spiral = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+      spiral.setAttribute("d", "M 0 0 m 0 -3.2 a 3.2 3.2 0 1 1 -2.26 0.94 a 2.15 2.15 0 1 0 1.52 -0.63 a 1.1 1.1 0 1 1 -0.78 0.32");
+      group.appendChild(ring);
+      group.appendChild(spiral);
+      knotLayer.appendChild(group);
+      return { group, ring, spiral, x: 0, y: 0, intensity: 0 };
+    };
+
+    const createAnchorSpec = (section, targetSelector, xPercent, yOffset, boundary = false) => ({
+      section,
+      targetSelector,
+      xPercent,
+      yOffset,
+      boundary,
+    });
+
+    const buildSectionSpecs = (section, index) => {
+      if (!(section instanceof HTMLElement)) {
+        return [];
+      }
+
+      if (section.matches(".hero, .subpage-hero")) {
+        return [
+          createAnchorSpec(section, ".hero-illustration, .mini-illustration svg", 0.78, 48),
+          createAnchorSpec(section, ".hero-illustration, .mini-illustration svg", 0.68, 124),
+          createAnchorSpec(section, ".hero-copy", 0.16, 94),
+          createAnchorSpec(section, ".hero-actions", 0.84, 10),
+          createAnchorSpec(section, null, 0.54, section.getBoundingClientRect().height - 36, true),
+        ];
+      }
+
+      if (section.matches(".features, .detail-section")) {
+        const cards = Array.from(section.querySelectorAll(".feature, .detail-card, .flow-step")).slice(0, 6);
+        const specs = [
+          createAnchorSpec(section, ".section-heading", 0.12, 18),
+        ];
+        cards.forEach((card, cardIndex) => {
+          const xPercent = cardIndex % 2 === 0 ? 0.12 : 0.88;
+          specs.push(createAnchorSpec(section, null, xPercent, 0));
+          specs[specs.length - 1].targetNode = card;
+        });
+        specs.push(createAnchorSpec(section, null, 0.5, section.getBoundingClientRect().height - 48, true));
+        return specs;
+      }
+
+      if (section.matches(".quote-band")) {
+        return [
+          createAnchorSpec(section, ".quote-layout", 0.82, 32),
+          createAnchorSpec(section, ".quote-layout", 0.22, 96),
+          createAnchorSpec(section, ".quote-layout", 0.74, 164),
+          createAnchorSpec(section, null, 0.48, section.getBoundingClientRect().height - 34, true),
+        ];
+      }
+
+      if (section.matches(".contact")) {
+        const items = Array.from(section.querySelectorAll(".contact-row, .page-link-row")).slice(0, 4);
+        const specs = [
+          createAnchorSpec(section, ".section-heading", 0.18, 18),
+        ];
+        items.forEach((item, itemIndex) => {
+          const xPercent = itemIndex % 2 === 0 ? 0.82 : 0.18;
+          const spec = createAnchorSpec(section, null, xPercent, 0, false);
+          spec.targetNode = item;
+          specs.push(spec);
+        });
+        specs.push(createAnchorSpec(section, null, 0.58, section.getBoundingClientRect().height - 36, true));
+        return specs;
+      }
+
+      return [
+        createAnchorSpec(section, null, index % 2 === 0 ? 0.28 : 0.72, 36),
+        createAnchorSpec(section, null, 0.5, section.getBoundingClientRect().height - 40, true),
+      ];
+    };
+
+    let specs = [];
+
+    const resolveAnchorPosition = (spec) => {
+      const sectionRect = spec.section.getBoundingClientRect();
+      const sectionPageTop = sectionRect.top + state.currentScroll;
+      const sectionWidth = Math.max(sectionRect.width, 1);
+      let x = sectionRect.left + state.currentScroll * 0 + sectionWidth * spec.xPercent;
+      let y = sectionPageTop + spec.yOffset;
+
+      const target =
+        spec.targetNode ||
+        (spec.targetSelector ? spec.section.querySelector(spec.targetSelector) : null);
+
+      if (target instanceof Element) {
+        const rect = target.getBoundingClientRect();
+        x = rect.left + rect.width * spec.xPercent;
+        y = rect.top + state.currentScroll + spec.yOffset;
+      } else if (spec.boundary) {
+        y = sectionPageTop + Math.max(36, sectionRect.height - 28);
+      }
+
+      return {
+        x: clamp(x, 24, Math.max(state.viewportWidth - 24, 24)),
+        y: clamp(y, 24, Math.max(pageHeight - 24, 24)),
+      };
+    };
+
+    const initializeAnchors = () => {
+      anchorModels.length = 0;
+      specs.forEach((spec, index) => {
+        const point = resolveAnchorPosition(spec);
+        anchorModels.push({
+          spec,
+          index,
+          boundary: !!spec.boundary,
+          restX: point.x,
+          restY: point.y,
+          currentX: point.x,
+          currentY: point.y,
+          velocityX: 0,
+          velocityY: 0,
+        });
+      });
+    };
+
+    const rebuildSpecs = () => {
+      specs = sections.flatMap((section, index) => buildSectionSpecs(section, index));
+    };
+
+    const catmullRomPath = (points) => {
+      if (points.length < 2) {
+        return "";
+      }
+      const command = [`M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`];
+      for (let index = 0; index < points.length - 1; index += 1) {
+        const p0 = points[Math.max(0, index - 1)];
+        const p1 = points[index];
+        const p2 = points[index + 1];
+        const p3 = points[Math.min(points.length - 1, index + 2)];
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        command.push(
+          `C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)} ${cp2x.toFixed(2)} ${cp2y.toFixed(2)} ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`
+        );
+      }
+      return command.join(" ");
+    };
+
+    const buildSamples = (points) => {
+      const samples = [];
+      if (points.length < 2) {
+        return samples;
+      }
+
+      for (let index = 0; index < points.length - 1; index += 1) {
+        const p0 = points[Math.max(0, index - 1)];
+        const p1 = points[index];
+        const p2 = points[index + 1];
+        const p3 = points[Math.min(points.length - 1, index + 2)];
+        let previous = { x: p1.x, y: p1.y };
+        let arc = 0;
+        for (let step = 1; step <= 8; step += 1) {
+          const t = step / 8;
+          const t2 = t * t;
+          const t3 = t2 * t;
+          const x = 0.5 * (
+            (2 * p1.x) +
+            (-p0.x + p2.x) * t +
+            (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+            (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3
+          );
+          const y = 0.5 * (
+            (2 * p1.y) +
+            (-p0.y + p2.y) * t +
+            (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+            (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3
+          );
+          arc += Math.hypot(x - previous.x, y - previous.y);
+          previous = { x, y };
+        }
+        samples.push({ direct: Math.hypot(p2.x - p1.x, p2.y - p1.y), arc });
+      }
+
+      return samples;
+    };
+
+    const updateKnotTargets = () => {
+      const boundaryAnchors = anchorModels.filter((anchor) => anchor.boundary);
+      while (knotModels.length < boundaryAnchors.length) {
+        knotModels.push(createKnot());
+      }
+      while (knotModels.length > boundaryAnchors.length) {
+        const removed = knotModels.pop();
+        if (removed) {
+          removed.group.remove();
+        }
+      }
+
+      boundaryAnchors.forEach((anchor, index) => {
+        const knot = knotModels[index];
+        knot.x = anchor.currentX;
+        knot.y = anchor.currentY;
+        knot.group.setAttribute("transform", `translate(${anchor.currentX.toFixed(2)} ${anchor.currentY.toFixed(2)})`);
+      });
+    };
+
+    const applyDrawOn = (now, tension) => {
+      const scrollAhead = state.currentScroll + state.viewportHeight * 0.5 + 200;
+      const baseRatio = clamp(scrollAhead / Math.max(pageHeight, 1), 0, 1);
+      let boostedRatio = baseRatio;
+      knotModels.forEach((knot) => {
+        const distance = Math.abs(knot.y - scrollAhead);
+        const influence = Math.max(0, 1 - distance / 280);
+        boostedRatio += influence * 0.03;
+        const centerDistance = Math.abs(knot.y - (state.currentScroll + state.viewportHeight * 0.5));
+        knot.intensity = clamp(1 - centerDistance / (state.viewportHeight * 0.7), 0.22, 1);
+        knot.group.style.opacity = knot.intensity.toFixed(3);
+      });
+
+      const reveal = clamp(boostedRatio, 0, 1) * pathLength;
+      if (Math.abs(reveal - lastScrollReveal) > 0.5) {
+        lastScrollReveal = reveal;
+        pathElements.forEach((element) => {
+          element.style.strokeDasharray = `${reveal.toFixed(2)} ${Math.max(pathLength, 1).toFixed(2)}`;
+          element.style.strokeDashoffset = "0";
+        });
+      }
+
+      const opacity = mix(0.4, 0.8, tension);
+      mainPath.style.strokeOpacity = opacity.toFixed(3);
+      glow.style.strokeOpacity = mix(0.18, 0.34, tension).toFixed(3);
+      deepGlow.style.strokeOpacity = mix(0.06, 0.16, tension).toFixed(3);
+      const glowBlur = mix(8, 2, tension);
+      glow.style.filter = `blur(${Math.max(2, glowBlur * 0.5).toFixed(2)}px)`;
+      deepGlow.style.filter = `blur(${glowBlur.toFixed(2)}px)`;
+
+      if (!reducedThreadMotion) {
+        pulsePath.style.strokeDasharray = `8 ${Math.max(pathLength + 500, 500).toFixed(2)}`;
+        pulsePath.style.strokeDashoffset = (-((now * 0.12) % Math.max(pathLength + 508, 508))).toFixed(2);
+      } else {
+        pulsePath.style.strokeDasharray = "0 9999";
+      }
+    };
+
+    const recomputePath = () => {
+      const points = anchorModels.map((anchor) => ({ x: anchor.currentX, y: anchor.currentY }));
+      const d = catmullRomPath(points);
+      pathElements.forEach((element) => element.setAttribute("d", d));
+      mainPath.setAttribute("d", d);
+      try {
+        pathLength = Math.max(mainPath.getTotalLength(), 1);
+      } catch (error) {
+        pathLength = 1;
+      }
+      const segments = buildSamples(points);
+      const averageTension = segments.length
+        ? clamp(
+          segments.reduce((sum, segment) => sum + segment.direct / Math.max(segment.arc, 1), 0) / segments.length,
+          0.45,
+          1
+        )
+        : 0.6;
+      updateKnotTargets();
+      return averageTension;
+    };
+
+    const refreshLayout = () => {
+      if (disposed) {
+        return;
+      }
+      pageHeight = Math.max(siteShell.scrollHeight, siteShell.getBoundingClientRect().height);
+      dprAwareWidth = Math.max(1, state.viewportWidth);
+      svg.style.height = `${Math.ceil(pageHeight)}px`;
+      svg.setAttribute("viewBox", `0 0 ${dprAwareWidth} ${Math.ceil(pageHeight)}`);
+      rebuildSpecs();
+      initializeAnchors();
+      const tension = recomputePath();
+      applyDrawOn(performance.now(), tension);
+    };
+
+    const update = (now) => {
+      if (disposed || !anchorModels.length) {
+        return;
+      }
+
+      let changed = false;
+      const useAttraction = !reducedThreadMotion;
+      const stiffness = 120 / 1000;
+      const damping = 0.9;
+
+      anchorModels.forEach((anchor) => {
+        let targetX = anchor.restX;
+        let targetY = anchor.restY;
+        if (useAttraction) {
+          const dx = state.mouseX - anchor.restX;
+          const dy = state.mouseY + state.currentScroll - anchor.restY;
+          const distance = Math.hypot(dx, dy);
+          if (distance < 300) {
+            const attraction = 15 * (1 - distance / 300);
+            const direction = distance || 1;
+            targetX += (dx / direction) * attraction;
+            targetY += (dy / direction) * attraction;
+          }
+        }
+
+        anchor.velocityX += (targetX - anchor.currentX) * stiffness;
+        anchor.velocityY += (targetY - anchor.currentY) * stiffness;
+        anchor.velocityX *= damping;
+        anchor.velocityY *= damping;
+        anchor.currentX += anchor.velocityX;
+        anchor.currentY += anchor.velocityY;
+
+        if (
+          Math.abs(anchor.velocityX) > 0.01 ||
+          Math.abs(anchor.velocityY) > 0.01 ||
+          Math.abs(targetX - anchor.currentX) > 0.2 ||
+          Math.abs(targetY - anchor.currentY) > 0.2
+        ) {
+          changed = true;
+        }
+      });
+
+      const mouseChanged = Math.abs(state.mouseX - lastMouseX) > 1 || Math.abs(state.mouseY - lastMouseY) > 1;
+      if ((changed || mouseChanged) && now - lastShapeUpdateAt > 33) {
+        const tension = recomputePath();
+        applyDrawOn(now, tension);
+        lastShapeUpdateAt = now;
+      } else {
+        const tension = recomputePath();
+        applyDrawOn(now, tension);
+      }
+
+      lastMouseX = state.mouseX;
+      lastMouseY = state.mouseY;
+    };
+
+    refreshLayout();
+
+    state.narrativeThread = {
+      update,
+      refreshLayout,
+      destroy() {
+        if (disposed) {
+          return;
+        }
+        disposed = true;
+        svg.remove();
+        state.narrativeThread = null;
+      },
+    };
+  }
+
   function setupGradientMotion() {
     if (reducedMotion) {
       return;
     }
 
     body.classList.add("has-gradient-motion");
+  }
+
+  function setupStoryWeather() {
+    if (reducedMotion || state.storyWeather) {
+      return;
+    }
+
+    const canvas = doc.createElement("canvas");
+    canvas.className = "weather-canvas";
+    body.appendChild(canvas);
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      canvas.remove();
+      return;
+    }
+
+    const particleStride = 12;
+    const offsets = {
+      x: 0,
+      y: 1,
+      vx: 2,
+      vy: 3,
+      size: 4,
+      rotation: 5,
+      rotationSpeed: 6,
+      opacity: 7,
+      life: 8,
+      maxLife: 9,
+      type: 10,
+      seed: 11,
+    };
+    const typeIds = {
+      petal: 0,
+      firefly: 1,
+      sparkle: 2,
+    };
+    const stateTypes = {
+      morning: typeIds.petal,
+      afternoon: typeIds.petal,
+      evening: typeIds.firefly,
+      night: typeIds.sparkle,
+    };
+    const particleCount = isTouch ? 60 : 120;
+    const particles = new Float32Array(particleCount * particleStride);
+    const petalPalette = [
+      [242, 196, 206],
+      [184, 228, 220],
+    ];
+    let dpr = 1;
+    let disposed = false;
+    let weatherCheckId = 0;
+    let activeState = "morning";
+    let transitionState = null;
+    let lastNow = performance.now();
+    let lastScroll = state.currentScroll;
+
+    function getWeatherStateForHour(hour) {
+      if (hour >= 6 && hour < 12) {
+        return "morning";
+      }
+      if (hour >= 12 && hour < 17) {
+        return "afternoon";
+      }
+      if (hour >= 17 && hour < 21) {
+        return "evening";
+      }
+      return "night";
+    }
+
+    function activeParticleLimit(mode) {
+      if (mode === "evening") {
+        return Math.min(particleCount, isTouch ? 24 : 40);
+      }
+      if (mode === "night") {
+        return Math.min(particleCount, isTouch ? 36 : 60);
+      }
+      return Math.min(particleCount, isTouch ? 36 : 72);
+    }
+
+    function applyCanvasSize() {
+      dpr = Math.min(win.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(state.viewportWidth * dpr));
+      canvas.height = Math.max(1, Math.round(state.viewportHeight * dpr));
+      canvas.style.width = `${state.viewportWidth}px`;
+      canvas.style.height = `${state.viewportHeight}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+
+    function populateParticle(index, type, resetY = true) {
+      const offset = index * particleStride;
+      const seed = particles[offset + offsets.seed] || Math.random() * 1000;
+      particles[offset + offsets.seed] = seed;
+      particles[offset + offsets.type] = type;
+      particles[offset + offsets.x] = Math.random() * state.viewportWidth;
+      particles[offset + offsets.y] = resetY
+        ? -20 - Math.random() * state.viewportHeight * 0.35
+        : Math.random() * state.viewportHeight;
+      particles[offset + offsets.vx] = 0;
+      particles[offset + offsets.vy] = 0;
+      particles[offset + offsets.life] = Math.random() * 30;
+
+      if (type === typeIds.petal) {
+        particles[offset + offsets.size] = 6 + Math.random() * 4;
+        particles[offset + offsets.rotation] = Math.random() * Math.PI * 2;
+        particles[offset + offsets.rotationSpeed] = ((0.5 + Math.random() * 1.5) * Math.PI) / 180;
+        particles[offset + offsets.opacity] = 0.15 + Math.random() * 0.2;
+        particles[offset + offsets.maxLife] = 420 + Math.random() * 260;
+        particles[offset + offsets.vy] = 0.3 + Math.random() * 0.5;
+      } else if (type === typeIds.firefly) {
+        particles[offset + offsets.size] = 3 + Math.random() * 2;
+        particles[offset + offsets.rotation] = Math.random() * Math.PI * 2;
+        particles[offset + offsets.rotationSpeed] = 0.004 + Math.random() * 0.01;
+        particles[offset + offsets.opacity] = 0.18 + Math.random() * 0.15;
+        particles[offset + offsets.maxLife] = 540 + Math.random() * 320;
+        particles[offset + offsets.vy] = -0.08 + Math.random() * 0.16;
+      } else {
+        particles[offset + offsets.size] = 8 + Math.random() * 6;
+        particles[offset + offsets.rotation] = Math.random() * Math.PI * 2;
+        particles[offset + offsets.rotationSpeed] = 0.002 + Math.random() * 0.006;
+        particles[offset + offsets.opacity] = 0.08 + Math.random() * 0.12;
+        particles[offset + offsets.maxLife] = 620 + Math.random() * 320;
+        particles[offset + offsets.vy] = 0.05 + Math.random() * 0.1;
+      }
+    }
+
+    function syncWeatherMode() {
+      const nextMode = getWeatherStateForHour(new Date().getHours());
+      if (nextMode === activeState) {
+        state.weatherMode = activeState;
+        return;
+      }
+      transitionState = {
+        from: activeState,
+        to: nextMode,
+        startAt: performance.now(),
+      };
+      activeState = nextMode;
+      state.weatherMode = nextMode;
+    }
+
+    function initializeParticles() {
+      activeState = getWeatherStateForHour(new Date().getHours());
+      state.weatherMode = activeState;
+      for (let index = 0; index < particleCount; index += 1) {
+        populateParticle(index, stateTypes[activeState], false);
+      }
+    }
+
+    function drawPetal(x, y, size, rotation, alpha, seed) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      const petalColor = petalPalette[Math.floor(seed) % petalPalette.length];
+      ctx.fillStyle = `rgba(${petalColor[0]}, ${petalColor[1]}, ${petalColor[2]}, ${alpha.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size * 0.5, size * 0.82, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFirefly(x, y, size, alpha) {
+      const halo = ctx.createRadialGradient(x, y, 0, x, y, 12);
+      halo.addColorStop(0, `rgba(245, 230, 192, ${(alpha * 0.65).toFixed(3)})`);
+      halo.addColorStop(1, "rgba(245, 230, 192, 0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(245, 230, 192, ${alpha.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawSparkle(x, y, size, rotation, alpha) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 0.5);
+      ctx.lineTo(size * 0.2, 0);
+      ctx.lineTo(0, size * 0.5);
+      ctx.lineTo(-size * 0.2, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.5, 0);
+      ctx.lineTo(0, size * 0.2);
+      ctx.lineTo(size * 0.5, 0);
+      ctx.lineTo(0, -size * 0.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function update(now, frameDelta) {
+      if (disposed) {
+        return;
+      }
+
+      const dt = Math.max(0.5, Math.min((frameDelta || 16.6667) / 16.6667, 2));
+      const windAmplitude = activeState === "evening" ? 0.5 : 0.3;
+      const windX = Math.sin(now * 0.000314) * windAmplitude;
+      const scrollVelocity = state.currentScroll - lastScroll;
+      const scrollBoost = Math.abs(scrollVelocity) > 5 ? 1 + Math.abs(scrollVelocity) * 0.02 : 1;
+      lastScroll = state.currentScroll;
+      ctx.clearRect(0, 0, state.viewportWidth, state.viewportHeight);
+
+      const transitionProgress = transitionState
+        ? clamp((now - transitionState.startAt) / 3000, 0, 1)
+        : 1;
+      const fromLimit = activeParticleLimit(transitionState ? transitionState.from : activeState);
+      const toLimit = activeParticleLimit(activeState);
+      const convertCount = transitionState ? Math.round(toLimit * transitionProgress) : toLimit;
+
+      for (let index = 0; index < particleCount; index += 1) {
+        const offset = index * particleStride;
+        const isIncoming = index < convertCount;
+        const assignedMode = transitionState
+          ? isIncoming
+            ? transitionState.to
+            : transitionState.from
+          : activeState;
+        const assignedType = stateTypes[assignedMode];
+        if (particles[offset + offsets.type] !== assignedType) {
+          populateParticle(index, assignedType, true);
+        }
+
+        const activeLimit = transitionState
+          ? assignedMode === transitionState.to
+            ? toLimit
+            : fromLimit
+          : toLimit;
+        if (index >= activeLimit) {
+          continue;
+        }
+
+        let x = particles[offset + offsets.x];
+        let y = particles[offset + offsets.y];
+        let vx = particles[offset + offsets.vx];
+        let vy = particles[offset + offsets.vy];
+        const size = particles[offset + offsets.size];
+        let rotation = particles[offset + offsets.rotation];
+        const rotationSpeed = particles[offset + offsets.rotationSpeed];
+        const baseOpacity = particles[offset + offsets.opacity];
+        let life = particles[offset + offsets.life] + dt;
+        const maxLife = particles[offset + offsets.maxLife];
+        const type = particles[offset + offsets.type];
+        const seed = particles[offset + offsets.seed];
+
+        if (life > maxLife || y > state.viewportHeight + 30 || x < -40 || x > state.viewportWidth + 40) {
+          populateParticle(index, assignedType, true);
+          continue;
+        }
+
+        if (type === typeIds.petal) {
+          vx = windX + Math.sin(life * 0.02 + seed) * 0.4;
+          vy = (0.3 + (particles[offset + offsets.vy] - 0.3)) * scrollBoost;
+          rotation += rotationSpeed * dt;
+          x += vx * dt;
+          y += vy * dt;
+        } else if (type === typeIds.firefly) {
+          const flowX = noise2D(seed * 0.07 + now * 0.00016, y * 0.004) - 0.5;
+          const flowY = noise2D(seed * 0.09 + x * 0.004, now * 0.00012) - 0.5;
+          vx = windX * 0.4 + flowX * 0.9;
+          vy += flowY * 0.08;
+          vy = clamp(vy, -0.3, 0.3);
+          rotation += rotationSpeed * dt;
+          x += vx * dt;
+          y += vy * dt - Math.abs(scrollVelocity) * 0.01;
+        } else {
+          vx = windX * 0.55 + Math.sin(life * 0.012 + seed) * 0.18;
+          vy = particles[offset + offsets.vy] * scrollBoost;
+          rotation += rotationSpeed * dt;
+          x += vx * dt;
+          y += vy * dt;
+        }
+
+        const dx = x - state.mouseX;
+        const dy = y - state.mouseY;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 120) {
+          const repelX = (dx / Math.max(distance, 1)) * 0.3;
+          const repelY = (dy / Math.max(distance, 1)) * 0.2;
+          x += repelX * (type === typeIds.petal ? 2.6 : 1.4) * dt;
+          y += repelY * (type === typeIds.firefly ? 2.2 : 1.1) * dt;
+        }
+
+        particles[offset + offsets.x] = x;
+        particles[offset + offsets.y] = y;
+        particles[offset + offsets.vx] = vx;
+        particles[offset + offsets.vy] = vy;
+        particles[offset + offsets.rotation] = rotation;
+        particles[offset + offsets.life] = life;
+
+        let alpha = baseOpacity;
+        if (type === typeIds.firefly) {
+          const period = 1.5 + (seed % 2.5);
+          const phaseSeconds = ((now * 0.001 + seed * 0.37) % period) / period;
+          const pulse = phaseSeconds < 0.12
+            ? phaseSeconds / 0.12
+            : 1 - (phaseSeconds - 0.12) / 0.88;
+          alpha = mix(0.05, 0.55, clamp(pulse, 0, 1));
+        } else if (type === typeIds.sparkle) {
+          alpha = baseOpacity;
+          if ((Math.sin(now * 0.01 + seed * 3.7) + 1) * 0.5 > 0.95) {
+            alpha = Math.min(baseOpacity * 3, 0.55);
+          }
+        }
+
+        if (transitionState) {
+          alpha *= assignedMode === transitionState.to ? transitionProgress : 1 - transitionProgress;
+        }
+
+        if (alpha <= 0.01) {
+          continue;
+        }
+
+        if (type === typeIds.petal) {
+          drawPetal(x, y, size, rotation, alpha, seed);
+        } else if (type === typeIds.firefly) {
+          drawFirefly(x, y, size, alpha);
+        } else {
+          drawSparkle(x, y, size, rotation, alpha);
+        }
+      }
+
+      if (transitionState && transitionProgress >= 1) {
+        transitionState = null;
+      }
+    }
+
+    function destroy() {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      win.clearInterval(weatherCheckId);
+      canvas.remove();
+      body.classList.remove("has-weather");
+      state.storyWeather = null;
+    }
+
+    initializeParticles();
+    applyCanvasSize();
+    syncWeatherMode();
+    body.classList.add("has-weather");
+    weatherCheckId = win.setInterval(syncWeatherMode, 60000);
+
+    state.storyWeather = {
+      canvas,
+      refresh: applyCanvasSize,
+      update,
+      destroy,
+    };
   }
 
   function setupBreathing() {
@@ -3918,6 +5389,12 @@
 
     updateMagnetic();
     updateConstellation(now);
+    if (state.storyWeather && state.storyWeather.update) {
+      state.storyWeather.update(now, frameDelta || 16.6667);
+    }
+    if (state.narrativeThread && state.narrativeThread.update) {
+      state.narrativeThread.update(now);
+    }
     updateParallax(state.currentScroll);
     updateSVGMorphing(state.currentScroll, now);
     updateVolumetricDepth(now);
@@ -3938,16 +5415,20 @@
   }
 
   function init() {
+    setInkModeBadge("off");
     updateViewport();
     setupSmoothScroll();
     setupCustomCursor();
     setupMagneticHover();
     setupButtonMicroInteractions();
     setupConstellation();
+    setupStoryWeather();
     setupVolumetricDepth();
     setupParallax();
     setupSVGMorphing();
     setupGradientMotion();
+    setupSectionBleeds();
+    setupNarrativeThread();
     try {
       state.inkSimulation = createOpaqueInkSimulation();
     } catch (error) {
