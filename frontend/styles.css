@@ -870,6 +870,12 @@ h3 {
   padding-left: 34px;
 }
 
+.lullaby-melody {
+  margin: -4px 0 4px;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
 .lullaby-lines p {
   margin: 0;
   color: var(--fg-muted);

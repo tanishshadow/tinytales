@@ -470,19 +470,180 @@
     const output = document.getElementById("lullaby-output");
     const status = document.getElementById("lullaby-generator-status");
     const playButton = document.getElementById("lullaby-play-button");
+    const stopButton = document.getElementById("lullaby-stop-button");
     if (!form || !output || !status) {
       return;
+    }
+
+    let currentLullaby = null;
+    let playback = {
+      context: null,
+      nodes: [],
+      timers: [],
+      isPlaying: false,
+    };
+
+    function getAudioContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        return null;
+      }
+      return new AudioContextClass();
+    }
+
+    function setPlaybackButtons(isPlaying) {
+      if (playButton) {
+        playButton.disabled = isPlaying || !currentLullaby;
+      }
+      if (stopButton) {
+        stopButton.disabled = !isPlaying;
+      }
+    }
+
+    function clearPlayback(message, tone) {
+      playback.timers.forEach(function (timer) {
+        window.clearTimeout(timer);
+      });
+      playback.nodes.forEach(function (node) {
+        try {
+          if (typeof node.stop === "function") {
+            node.stop(0);
+          }
+        } catch (error) {
+          return null;
+        }
+      });
+      if (playback.context && playback.context.state !== "closed") {
+        playback.context.close().catch(function () {
+          return null;
+        });
+      }
+      playback = {
+        context: null,
+        nodes: [],
+        timers: [],
+        isPlaying: false,
+      };
+      output.querySelectorAll(".lullaby-lines p").forEach(function (line) {
+        line.classList.remove("is-active");
+      });
+      setPlaybackButtons(false);
+      if (message) {
+        setStatus(status, message, tone || "idle");
+      }
+    }
+
+    function midiToFrequency(note) {
+      return 440 * Math.pow(2, (note - 69) / 12);
+    }
+
+    function scheduleTone(context, destination, frequency, start, duration, options) {
+      const settings = options || {};
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = settings.type || "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(settings.volume || 0.08, start + (settings.attack || 0.04));
+      gain.gain.setTargetAtTime(0.0001, start + Math.max(0.05, duration - (settings.release || 0.45)), settings.release || 0.45);
+      oscillator.connect(gain);
+      gain.connect(destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.6);
+      playback.nodes.push(oscillator);
+    }
+
+    function scheduleInstrumentalLullaby(lullaby, lines, ball) {
+      const context = getAudioContext();
+      if (!context) {
+        setStatus(status, "This browser does not support Web Audio playback.", "error");
+        return;
+      }
+
+      clearPlayback();
+      playback.context = context;
+      playback.isPlaying = true;
+      setPlaybackButtons(true);
+
+      const master = context.createGain();
+      const filter = context.createBiquadFilter();
+      const delay = context.createDelay();
+      const delayGain = context.createGain();
+      master.gain.setValueAtTime(0.0001, context.currentTime);
+      master.gain.exponentialRampToValueAtTime(0.28, context.currentTime + 0.35);
+      master.gain.setTargetAtTime(0.0001, context.currentTime + (lines.length * 3.2) + 0.4, 1.1);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(1800, context.currentTime);
+      delay.delayTime.setValueAtTime(0.28, context.currentTime);
+      delayGain.gain.setValueAtTime(0.16, context.currentTime);
+      master.connect(filter);
+      filter.connect(context.destination);
+      filter.connect(delay);
+      delay.connect(delayGain);
+      delayGain.connect(context.destination);
+
+      const melodyName = String(lullaby.melody || "moonlight").toLowerCase();
+      const baseNote = melodyName.indexOf("sun") !== -1 ? 62 : melodyName.indexOf("star") !== -1 ? 67 : 60;
+      const scale = [0, 2, 4, 7, 9, 7, 4, 2];
+      const chords = [
+        [0, 7, 12],
+        [5, 9, 12],
+        [7, 11, 14],
+        [0, 4, 7],
+      ];
+      const lineDuration = 3.2;
+      const startAt = context.currentTime + 0.12;
+
+      lines.forEach(function (line, index) {
+        const lineStart = startAt + index * lineDuration;
+        const chord = chords[index % chords.length];
+        chord.forEach(function (interval, chordIndex) {
+          scheduleTone(context, master, midiToFrequency(baseNote - 12 + interval), lineStart, lineDuration + 0.8, {
+            type: chordIndex === 0 ? "sine" : "triangle",
+            volume: chordIndex === 0 ? 0.035 : 0.026,
+            attack: 0.45,
+            release: 1.2,
+          });
+        });
+
+        [0, 1, 2, 3].forEach(function (step) {
+          const note = baseNote + scale[(index + step) % scale.length];
+          scheduleTone(context, master, midiToFrequency(note + 12), lineStart + step * 0.72, 0.9, {
+            type: "sine",
+            volume: step === 0 ? 0.105 : 0.075,
+            attack: 0.035,
+            release: 0.5,
+          });
+        });
+
+        playback.timers.push(window.setTimeout(function () {
+          lines.forEach(function (lyricLine) {
+            lyricLine.classList.remove("is-active");
+          });
+          line.classList.add("is-active");
+          ball.style.transform = "translateY(" + (index * 34) + "px)";
+        }, index * lineDuration * 1000));
+      });
+
+      playback.timers.push(window.setTimeout(function () {
+        clearPlayback("Lullaby audio finished.", "success");
+      }, (lines.length * lineDuration + 1.4) * 1000));
+
+      setStatus(status, "Playing soft melody and background music.", "loading");
     }
 
     function renderLullaby(lullaby) {
       if (!lullaby) {
         return;
       }
+      currentLullaby = lullaby;
+      clearPlayback();
       output.innerHTML = [
         '<div class="lullaby-card">',
         '<span class="lullaby-ball" aria-hidden="true"></span>',
         '<p class="eyebrow">saved lullaby</p>',
         '<h3>' + escapeHtml(lullaby.title || "A Little Brave Lullaby") + "</h3>",
+        '<p class="lullaby-melody">Instrumental mood: ' + escapeHtml(lullaby.melody || "moonlight") + "</p>",
         '<div class="lullaby-lines">',
         (lullaby.lines || []).map(function (line, index) {
           return '<p data-line-index="' + index + '">' + escapeHtml(line) + "</p>";
@@ -493,6 +654,7 @@
       if (playButton) {
         playButton.disabled = false;
       }
+      setPlaybackButtons(false);
     }
 
     function playLullaby() {
@@ -502,24 +664,7 @@
         setStatus(status, "Generate or open a lullaby first.", "idle");
         return;
       }
-      lines.forEach(function (line) {
-        line.classList.remove("is-active");
-      });
-      let index = 0;
-      setStatus(status, "Playing the lullaby.", "loading");
-      const timer = window.setInterval(function () {
-        lines.forEach(function (line) {
-          line.classList.remove("is-active");
-        });
-        if (index >= lines.length) {
-          window.clearInterval(timer);
-          setStatus(status, "Lullaby finished.", "success");
-          return;
-        }
-        lines[index].classList.add("is-active");
-        ball.style.transform = "translateY(" + (index * 34) + "px)";
-        index += 1;
-      }, 950);
+      scheduleInstrumentalLullaby(currentLullaby || {}, lines, ball);
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -537,6 +682,11 @@
 
     if (playButton) {
       playButton.addEventListener("click", playLullaby);
+    }
+    if (stopButton) {
+      stopButton.addEventListener("click", function () {
+        clearPlayback("Lullaby audio stopped.", "idle");
+      });
     }
 
     form.addEventListener("submit", function (event) {
