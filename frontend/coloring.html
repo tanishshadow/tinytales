@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TinyTales | Coloring Book Mode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600;1,700&family=Lora:ital,wght@1,400;1,600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">TinyTales</span>
+        <span class="brand-note">gentle stories for brave little hearts</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="#details">Details</a>
+        <a href="library.html">Next</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="subpage-hero">
+        <div class="grain-overlay" aria-hidden="true"></div>
+        <div class="page-width subpage-inner">
+          <div class="subpage-copy">
+            <p class="eyebrow">make inside the story world</p>
+            <h1>Coloring Book Mode</h1>
+            <p class="hero-tagline">Turn an existing storybook into SVG line-art scenes, then tap regions to color the same world the child just read about.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#details">Create coloring pages</a>
+              <a class="button button-secondary" href="lullaby.html">Back to lullabies</a>
+            </div>
+          </div>
+          <div class="mini-illustration">
+            <svg viewBox="0 0 320 320" role="img" aria-label="A coloring page and crayons illustration">
+              <rect x="78" y="54" width="164" height="214" rx="18" fill="rgba(243, 237, 228, 0.95)" stroke="#2A2118" stroke-width="1.5"></rect>
+              <path d="M103 211c25-36 53-34 78-70 15-22 39-24 62-8" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linecap="round"></path>
+              <circle cx="134" cy="111" r="28" fill="none" stroke="#2A2118" stroke-width="1.5"></circle>
+              <path d="M93 272l64-64 31 31-64 64z" fill="rgba(242, 196, 206, 0.78)" stroke="#2A2118" stroke-width="1.5"></path>
+              <path d="M178 218l15-15 18 18-15 15z" fill="rgba(184, 228, 220, 0.85)" stroke="#2A2118" stroke-width="1.5"></path>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-section page-width" id="details">
+        <div class="section-rule" aria-hidden="true"></div>
+        <div class="section-heading">
+          <p class="eyebrow">interactive creation</p>
+          <h2>Color the story after reading</h2>
+        </div>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">live generation</p>
+            <h3>Create fillable line art</h3>
+            <p>Choose a saved storybook. The backend asks Gemini for simple scene descriptions and turns each page into SVG regions.</p>
+          </div>
+          <form class="story-generator-form" id="coloring-generator-form">
+            <label class="story-generator-field-full">
+              <span>Storybook</span>
+              <select name="storybook_id">
+                <option value="">Generate a storybook first</option>
+              </select>
+            </label>
+            <div class="coloring-palette story-generator-field-full" id="coloring-palette" aria-label="Color palette">
+              <button class="color-swatch is-active" type="button" data-color="#F2C4CE" style="--swatch: #F2C4CE"><span>Rose</span></button>
+              <button class="color-swatch" type="button" data-color="#B8E4DC" style="--swatch: #B8E4DC"><span>Mint</span></button>
+              <button class="color-swatch" type="button" data-color="#F5E6C0" style="--swatch: #F5E6C0"><span>Honey</span></button>
+              <button class="color-swatch" type="button" data-color="#D9C8E8" style="--swatch: #D9C8E8"><span>Lavender</span></button>
+              <button class="color-swatch" type="button" data-color="#A8D8D8" style="--swatch: #A8D8D8"><span>Blue</span></button>
+            </div>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Create Coloring Book</button>
+              <a class="button button-secondary" href="generation.html">Make a story first</a>
+            </div>
+            <p class="story-generator-status" id="coloring-generator-status" aria-live="polite">Ready when a saved storybook is available.</p>
+          </form>
+        </div>
+        <div class="detail-grid coloring-output" id="coloring-output" aria-live="polite"></div>
+      </section>
+
+      <section class="contact page-width">
+        <div class="section-heading section-heading-centered">
+          <p class="eyebrow">browse pages</p>
+          <h2>Save what you make together</h2>
+        </div>
+        <div class="page-links">
+          <a class="page-link-row" href="library.html"><span>Next</span><span aria-hidden="true"></span><strong>Open the library of stories, lullabies, and coloring books</strong></a>
+          <a class="page-link-row" href="lullaby.html"><span>Related</span><span aria-hidden="true"></span><strong>Generate a short musical comfort moment</strong></a>
+          <a class="page-link-row" href="storybook.html"><span>Back</span><span aria-hidden="true"></span><strong>Return to the storybook reader</strong></a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js" defer></script>
+  <script src="api-config.js" defer></script>
+  <script src="story-integration.js" defer></script>
+</body>
+</html>

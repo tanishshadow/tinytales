@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TinyTales | Character Creator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600;1,700&family=Lora:ital,wght@1,400;1,600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">TinyTales</span>
+        <span class="brand-note">gentle stories for brave little hearts</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="#details">Details</a>
+        <a href="storybook.html">Next</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="subpage-hero">
+        <div class="grain-overlay" aria-hidden="true"></div>
+        <div class="page-width subpage-inner">
+          <div class="subpage-copy">
+            <p class="eyebrow">visual character creator</p>
+            <h1>Avatar Sync</h1>
+            <p class="hero-tagline">Skin tone, hair, outfit, and small details stay saved so the storybook hero can consistently look like the child across generated books.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#details">Build avatar</a>
+              <a class="button button-secondary" href="personalization.html">Back to profile</a>
+            </div>
+          </div>
+          <div class="mini-illustration">
+            <svg viewBox="0 0 320 320" role="img" aria-label="A child avatar builder illustration">
+              <circle cx="160" cy="114" r="54" fill="rgba(245, 230, 192, 0.95)" stroke="#2A2118" stroke-width="1.5"></circle>
+              <path d="M108 117c6-43 29-68 62-68 37 0 61 25 64 70-18-19-38-27-61-24-24 3-45 10-65 22z" fill="rgba(99, 72, 52, 0.72)" stroke="#2A2118" stroke-width="1.5" stroke-linejoin="round"></path>
+              <path d="M96 247c11-42 35-70 72-78 36 7 60 33 72 78" fill="rgba(184, 228, 220, 0.85)" stroke="#2A2118" stroke-width="1.5" stroke-linejoin="round"></path>
+              <path d="M134 125c7-5 15-5 22 0M178 125c7-5 15-5 22 0M151 150c12 8 26 8 38 0" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linecap="round"></path>
+              <path d="M68 86 82 72l14 14 18 4-10 15 4 18-17-8-17 8 4-18-10-15z" fill="none" stroke="#2A2118" stroke-width="1.5" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-section page-width" id="details">
+        <div class="section-rule" aria-hidden="true"></div>
+        <div class="section-heading">
+          <p class="eyebrow">avatar metadata</p>
+          <h2>Keep the hero visually consistent</h2>
+        </div>
+        <section class="storybook-summary" id="page-story-context" aria-live="polite">
+          <div>
+            <p class="eyebrow">live backend context</p>
+            <h3 id="page-current-title">No story generated yet</h3>
+            <p class="storybook-summary-copy" id="page-current-copy">Generate a story once and this page will reflect the latest child, tone, and page count automatically.</p>
+          </div>
+          <dl class="storybook-meta">
+            <div>
+              <dt>Child</dt>
+              <dd id="page-current-child">Not set</dd>
+            </div>
+            <div>
+              <dt>Tone</dt>
+              <dd id="page-current-tone">Gentle</dd>
+            </div>
+            <div>
+              <dt>Pages</dt>
+              <dd id="page-current-pages">0</dd>
+            </div>
+            <div>
+              <dt>Backend</dt>
+              <dd id="page-backend-status">Checking...</dd>
+            </div>
+          </dl>
+        </section>
+        <div class="story-generator-panel">
+          <div class="story-generator-copy">
+            <p class="eyebrow">character creator</p>
+            <h3>Build the child's storybook hero</h3>
+            <p>These visual specs are saved as structured avatar metadata for future generation and rendering flows.</p>
+          </div>
+          <form class="story-generator-form" id="avatar-specs-form">
+            <label>
+              <span>Skin tone</span>
+              <select name="skin_tone">
+                <option value="porcelain">Porcelain</option>
+                <option value="fair-peach">Fair peach</option>
+                <option value="warm-beige">Warm beige</option>
+                <option value="golden-brown">Golden brown</option>
+                <option value="deep-brown">Deep brown</option>
+              </select>
+            </label>
+            <label>
+              <span>Hair style</span>
+              <select name="hair_style">
+                <option value="curly">Curly</option>
+                <option value="wavy">Wavy</option>
+                <option value="straight">Straight</option>
+                <option value="braids">Braids</option>
+                <option value="short-crop">Short crop</option>
+                <option value="buns">Buns</option>
+              </select>
+            </label>
+            <label>
+              <span>Hair color</span>
+              <select name="hair_color">
+                <option value="black">Black</option>
+                <option value="dark-brown">Dark brown</option>
+                <option value="brown">Brown</option>
+                <option value="auburn">Auburn</option>
+                <option value="blonde">Blonde</option>
+              </select>
+            </label>
+            <label>
+              <span>Eye color</span>
+              <select name="eye_color">
+                <option value="brown">Brown</option>
+                <option value="hazel">Hazel</option>
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+                <option value="gray">Gray</option>
+              </select>
+            </label>
+            <label>
+              <span>Outfit style</span>
+              <select name="outfit_style">
+                <option value="overalls">Overalls</option>
+                <option value="hoodie">Hoodie</option>
+                <option value="dress">Dress</option>
+                <option value="pajamas">Pajamas</option>
+                <option value="adventure-jacket">Adventure jacket</option>
+              </select>
+            </label>
+            <label>
+              <span>Outfit color</span>
+              <select name="outfit_color">
+                <option value="soft-blue">Soft blue</option>
+                <option value="sunny-yellow">Sunny yellow</option>
+                <option value="leaf-green">Leaf green</option>
+                <option value="rose-pink">Rose pink</option>
+                <option value="lavender">Lavender</option>
+                <option value="warm-red">Warm red</option>
+              </select>
+            </label>
+            <label>
+              <span>Accessory</span>
+              <select name="accessory">
+                <option value="none">None</option>
+                <option value="glasses">Glasses</option>
+                <option value="headband">Headband</option>
+                <option value="cap">Cap</option>
+                <option value="scarf">Scarf</option>
+                <option value="tiny-backpack">Tiny backpack</option>
+              </select>
+            </label>
+            <label class="story-generator-field-full">
+              <span>Visual notes</span>
+              <textarea name="notes" rows="4" maxlength="240" placeholder="Freckles, favorite purple sneakers, a small star patch on the pocket."></textarea>
+            </label>
+            <div class="story-generator-actions story-generator-field-full">
+              <button class="button button-primary" type="submit">Save Avatar Specs</button>
+              <a class="button button-secondary" href="generation.html">Generate with this avatar</a>
+            </div>
+            <p class="story-generator-status" id="avatar-specs-status" aria-live="polite"></p>
+          </form>
+        </div>
+        <div class="detail-grid">
+          <article class="detail-card">
+            <h3>Skin Tone</h3>
+            <p>Saved as explicit visual metadata so illustration prompts and renderers can preserve identity details.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Hair</h3>
+            <p>Style and color are stored separately for more reliable reuse across storybook scenes.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Outfit</h3>
+            <p>Clothing style and palette help the child recognize themselves page after page.</p>
+          </article>
+          <article class="detail-card">
+            <h3>Accessories</h3>
+            <p>Small recurring details can become a visual anchor without changing the emotional story arc.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="quote-band">
+        <div class="page-width quote-layout">
+          <div>
+            <p class="eyebrow eyebrow-invert">avatar sync</p>
+            <h2>A consistent hero helps the child feel like the story remembered them.</h2>
+          </div>
+          <div class="quote-copy">
+            <p>The creator stores detail, not just a label, so future visual generation can keep the same child at the center of the book.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="contact page-width">
+        <div class="section-heading section-heading-centered">
+          <p class="eyebrow">browse pages</p>
+          <h2>Use the avatar in the next story</h2>
+        </div>
+        <div class="page-links">
+          <a class="page-link-row" href="storybook.html"><span>Next</span><span aria-hidden="true"></span><strong>Storybook UI and per-page reading flow</strong></a>
+          <a class="page-link-row" href="personalization.html"><span>Back</span><span aria-hidden="true"></span><strong>Return to child profile details</strong></a>
+          <a class="page-link-row" href="generation.html"><span>Create</span><span aria-hidden="true"></span><strong>Generate a story with this saved avatar</strong></a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js" defer></script>
+  <script src="api-config.js" defer></script>
+  <script src="story-integration.js" defer></script>
+</body>
+</html>

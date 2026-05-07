@@ -89,6 +89,10 @@
     return requestJson("/api/storybooks");
   }
 
+  async function fetchLibraryItems() {
+    return requestJson("/api/library");
+  }
+
   async function fetchStorybookById(storybookId) {
     const payload = await requestJson(
       "/api/storybook/" + encodeURIComponent(storybookId)
@@ -107,6 +111,18 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+  }
+
+  function getLullabyUrl(lullabyId) {
+    return lullabyId
+      ? "lullaby.html?lullabyId=" + encodeURIComponent(lullabyId)
+      : "lullaby.html";
+  }
+
+  function getColoringUrl(coloringBookId) {
+    return coloringBookId
+      ? "coloring.html?coloringBookId=" + encodeURIComponent(coloringBookId)
+      : "coloring.html";
   }
 
   function parseCheckbox(form, name) {
@@ -242,35 +258,65 @@
     }
   }
 
-  function renderLibraryCards(storybooks) {
+  function renderLibraryCards(items) {
     const listElement = document.getElementById("library-story-list");
     if (!listElement) {
       return;
     }
 
-    if (!storybooks.length) {
+    if (!items.length) {
       listElement.innerHTML = [
         '<article class="detail-card">',
-        "<h3>No backend stories yet</h3>",
-        "<p>Create a story from the landing page or story generation page and it will appear here automatically.</p>",
+        "<h3>No saved creations yet</h3>",
+        "<p>Create a story, lullaby, or coloring book and it will appear here automatically.</p>",
         "</article>",
       ].join("");
       return;
     }
 
-    listElement.innerHTML = storybooks
+    listElement.innerHTML = items
       .slice(0, 8)
-      .map(function (storybook) {
+      .map(function (item) {
+        const contentType = item.content_type || "storybook";
+        if (contentType === "lullaby") {
+          return [
+            '<article class="detail-card" data-library-type="lullaby" data-lullaby-id="' + escapeHtml(item.id) + '">',
+            '<h3><a href="' + escapeHtml(getLullabyUrl(item.id)) + '">' + escapeHtml(item.title || "Lullaby") + "</a></h3>",
+            "<p><strong>Type:</strong> Lullaby</p>",
+            "<p><strong>Child:</strong> " + escapeHtml(item.child_name || "the little one") + "</p>",
+            "<p><strong>Lines:</strong> " + escapeHtml(String(item.line_count || 0)) + "</p>",
+            "<p><strong>Updated:</strong> " + escapeHtml(formatDate(item.updated_at || item.created_at)) + "</p>",
+            '<div class="detail-card-actions">',
+            '<a class="button button-secondary button-small" href="' + escapeHtml(getLullabyUrl(item.id)) + '">Play</a>',
+            "</div>",
+            "</article>",
+          ].join("");
+        }
+        if (contentType === "coloring-book") {
+          return [
+            '<article class="detail-card" data-library-type="coloring-book" data-coloring-id="' + escapeHtml(item.id) + '">',
+            '<h3><a href="' + escapeHtml(getColoringUrl(item.id)) + '">' + escapeHtml(item.title || "Coloring Book") + "</a></h3>",
+            "<p><strong>Type:</strong> Coloring book</p>",
+            "<p><strong>Child:</strong> " + escapeHtml(item.child_name || "the little one") + "</p>",
+            "<p><strong>Scenes:</strong> " + escapeHtml(String(item.scene_count || 0)) + "</p>",
+            "<p><strong>Updated:</strong> " + escapeHtml(formatDate(item.updated_at || item.created_at)) + "</p>",
+            '<div class="detail-card-actions">',
+            '<a class="button button-secondary button-small" href="' + escapeHtml(getColoringUrl(item.id)) + '">Color</a>',
+            "</div>",
+            "</article>",
+          ].join("");
+        }
         return [
-          '<article class="detail-card" data-story-id="' + escapeHtml(storybook.id) + '">',
-          '<h3><a href="' + escapeHtml(getStorybookUrl(storybook.id)) + '">' + escapeHtml(storybook.title || "Storybook") + "</a></h3>",
-          "<p><strong>Child:</strong> " + escapeHtml(storybook.child_name || "the little one") + "</p>",
-          "<p><strong>Tone:</strong> " + escapeHtml(storybook.tone || "gentle") + "</p>",
-          "<p><strong>Pages:</strong> " + escapeHtml(String(storybook.page_count || 0)) + "</p>",
-          "<p><strong>Updated:</strong> " + escapeHtml(formatDate(storybook.updated_at || storybook.created_at)) + "</p>",
+          '<article class="detail-card" data-story-id="' + escapeHtml(item.id) + '">',
+          '<h3><a href="' + escapeHtml(getStorybookUrl(item.id)) + '">' + escapeHtml(item.title || "Storybook") + "</a></h3>",
+          "<p><strong>Type:</strong> Storybook</p>",
+          "<p><strong>Child:</strong> " + escapeHtml(item.child_name || "the little one") + "</p>",
+          "<p><strong>Tone:</strong> " + escapeHtml(item.tone || "gentle") + "</p>",
+          "<p><strong>Pages:</strong> " + escapeHtml(String(item.page_count || 0)) + "</p>",
+          "<p><strong>Updated:</strong> " + escapeHtml(formatDate(item.updated_at || item.created_at)) + "</p>",
           '<div class="detail-card-actions">',
-          '<a class="button button-secondary button-small" href="' + escapeHtml(getStorybookUrl(storybook.id)) + '">Read</a>',
-          '<button class="button button-secondary button-small" type="button" data-library-action="favorite">' + (storybook.is_favorite ? "Unfavorite" : "Favorite") + "</button>",
+          '<a class="button button-secondary button-small" href="' + escapeHtml(getStorybookUrl(item.id)) + '">Read</a>',
+          '<button class="button button-secondary button-small" type="button" data-library-action="favorite">' + (item.is_favorite ? "Unfavorite" : "Favorite") + "</button>",
           '<button class="button button-secondary button-small" type="button" data-library-action="share">Share</button>',
           '<button class="button button-secondary button-small" type="button" data-library-action="export">Export</button>',
           "</div>",
@@ -305,6 +351,13 @@
         : "API online, Gemini missing"
       : "Unavailable";
     updatedElement.textContent = latestStory ? formatDate(latestStory.updated_at || latestStory.created_at) : EMPTY_VALUE;
+  }
+
+  function applyCreativeLibrarySummary(items) {
+    const countElement = document.getElementById("library-total-count");
+    if (countElement) {
+      countElement.textContent = String(items.length);
+    }
   }
 
   function applyParentSummary(storybooks, cachedStory, health, dashboard) {
@@ -410,6 +463,198 @@
       submitButton.disabled = false;
       form.dataset.busy = "false";
     }
+  }
+
+  function setupLullabyPage() {
+    const form = document.getElementById("lullaby-generator-form");
+    const output = document.getElementById("lullaby-output");
+    const status = document.getElementById("lullaby-generator-status");
+    const playButton = document.getElementById("lullaby-play-button");
+    if (!form || !output || !status) {
+      return;
+    }
+
+    function renderLullaby(lullaby) {
+      if (!lullaby) {
+        return;
+      }
+      output.innerHTML = [
+        '<div class="lullaby-card">',
+        '<span class="lullaby-ball" aria-hidden="true"></span>',
+        '<p class="eyebrow">saved lullaby</p>',
+        '<h3>' + escapeHtml(lullaby.title || "A Little Brave Lullaby") + "</h3>",
+        '<div class="lullaby-lines">',
+        (lullaby.lines || []).map(function (line, index) {
+          return '<p data-line-index="' + index + '">' + escapeHtml(line) + "</p>";
+        }).join(""),
+        "</div>",
+        "</div>",
+      ].join("");
+      if (playButton) {
+        playButton.disabled = false;
+      }
+    }
+
+    function playLullaby() {
+      const lines = Array.from(output.querySelectorAll(".lullaby-lines p"));
+      const ball = output.querySelector(".lullaby-ball");
+      if (!lines.length || !ball) {
+        setStatus(status, "Generate or open a lullaby first.", "idle");
+        return;
+      }
+      lines.forEach(function (line) {
+        line.classList.remove("is-active");
+      });
+      let index = 0;
+      setStatus(status, "Playing the lullaby.", "loading");
+      const timer = window.setInterval(function () {
+        lines.forEach(function (line) {
+          line.classList.remove("is-active");
+        });
+        if (index >= lines.length) {
+          window.clearInterval(timer);
+          setStatus(status, "Lullaby finished.", "success");
+          return;
+        }
+        lines[index].classList.add("is-active");
+        ball.style.transform = "translateY(" + (index * 34) + "px)";
+        index += 1;
+      }, 950);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const lullabyId = params.get("lullabyId");
+    if (lullabyId) {
+      requestJson("/api/lullaby/" + encodeURIComponent(lullabyId))
+        .then(function (payload) {
+          renderLullaby(payload);
+          setStatus(status, "Loaded saved lullaby.", "success");
+        })
+        .catch(function (error) {
+          setStatus(status, error instanceof Error ? error.message : "Unable to load lullaby.", "error");
+        });
+    }
+
+    if (playButton) {
+      playButton.addEventListener("click", playLullaby);
+    }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const prompt = String(formData.get("prompt") || "").trim();
+      if (!prompt) {
+        setStatus(status, "Share the feeling first.", "error");
+        return;
+      }
+      formData.set("prompt", prompt);
+      setStatus(status, "Generating a short lullaby...", "loading");
+      requestJson("/api/generate/lullaby", {
+        method: "POST",
+        body: formData,
+      })
+        .then(function (payload) {
+          renderLullaby(payload);
+          setStatus(status, "Lullaby saved to the library.", "success");
+        })
+        .catch(function (error) {
+          setStatus(status, error instanceof Error ? error.message : "Unable to generate lullaby.", "error");
+        });
+    });
+  }
+
+  function setupColoringPage() {
+    const form = document.getElementById("coloring-generator-form");
+    const output = document.getElementById("coloring-output");
+    const status = document.getElementById("coloring-generator-status");
+    const palette = document.getElementById("coloring-palette");
+    if (!form || !output || !status) {
+      return;
+    }
+
+    let selectedColor = "#F2C4CE";
+
+    function renderColoringBook(coloringBook) {
+      if (!coloringBook) {
+        return;
+      }
+      output.innerHTML = (coloringBook.scenes || []).map(function (scene) {
+        return [
+          '<article class="detail-card coloring-scene">',
+          "<h3>" + escapeHtml(scene.title || "Coloring Scene") + "</h3>",
+          "<p>" + escapeHtml(scene.description || "Tap a region to color it.") + "</p>",
+          '<div class="coloring-canvas">' + (scene.svg || "") + "</div>",
+          "</article>",
+        ].join("");
+      }).join("");
+      setStatus(status, "Coloring book ready. Tap a region to fill it.", "success");
+    }
+
+    if (palette) {
+      palette.addEventListener("click", function (event) {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const color = target.getAttribute("data-color");
+        if (!color) {
+          return;
+        }
+        selectedColor = color;
+        palette.querySelectorAll("[data-color]").forEach(function (button) {
+          button.classList.toggle("is-active", button === target);
+        });
+      });
+    }
+
+    output.addEventListener("click", function (event) {
+      const target = event.target;
+      if (!(target instanceof SVGElement) || !target.classList.contains("color-region")) {
+        return;
+      }
+      target.setAttribute("fill", selectedColor);
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const coloringBookId = params.get("coloringBookId");
+    if (coloringBookId) {
+      requestJson("/api/coloring-book/" + encodeURIComponent(coloringBookId))
+        .then(renderColoringBook)
+        .catch(function (error) {
+          setStatus(status, error instanceof Error ? error.message : "Unable to load coloring book.", "error");
+        });
+    }
+
+    fetchStorybooks().then(function (storybooks) {
+      const select = form.elements.namedItem("storybook_id");
+      if (!select || !storybooks.length) {
+        return;
+      }
+      select.innerHTML = storybooks.map(function (storybook) {
+        return '<option value="' + escapeHtml(storybook.id) + '">' + escapeHtml(storybook.title || "Storybook") + "</option>";
+      }).join("");
+    }).catch(function () {
+      return null;
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const storybookId = form.elements.namedItem("storybook_id").value;
+      if (!storybookId) {
+        setStatus(status, "Generate a storybook first, then make coloring pages from it.", "idle");
+        return;
+      }
+      setStatus(status, "Creating coloring pages from the storybook...", "loading");
+      requestJson("/api/generate/coloring-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storybook_id: storybookId }),
+      })
+        .then(renderColoringBook)
+        .catch(function (error) {
+          setStatus(status, error instanceof Error ? error.message : "Unable to generate coloring pages.", "error");
+        });
+    });
   }
 
   function setupGenerationPage() {
@@ -683,6 +928,44 @@
       savePreference("/api/preferences/personalization", payload)
         .then(function () {
           setStatus(status, "Child profile saved for future stories.", "success");
+        })
+        .catch(function (error) {
+          setStatus(status, error instanceof Error ? error.message : "Unable to save.", "error");
+        });
+    });
+  }
+
+  function setupAvatarSpecsPage() {
+    const form = document.getElementById("avatar-specs-form");
+    if (!form) {
+      return;
+    }
+    const status = document.getElementById("avatar-specs-status");
+
+    fetchPreference("/api/preferences/avatar-specs")
+      .then(function (payload) {
+        applyFormValues(form, payload);
+        setStatus(status, "Loaded saved avatar details.", "success");
+      })
+      .catch(function () {
+        setStatus(status, "Start a new character creator profile here.", "idle");
+      });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const payload = {
+        skin_tone: form.elements.namedItem("skin_tone").value,
+        hair_style: form.elements.namedItem("hair_style").value,
+        hair_color: form.elements.namedItem("hair_color").value,
+        eye_color: form.elements.namedItem("eye_color").value,
+        outfit_style: form.elements.namedItem("outfit_style").value,
+        outfit_color: form.elements.namedItem("outfit_color").value,
+        accessory: form.elements.namedItem("accessory").value,
+        notes: form.elements.namedItem("notes").value.trim(),
+      };
+      savePreference("/api/preferences/avatar-specs", payload)
+        .then(function () {
+          setStatus(status, "Avatar specs saved for future storybook heroes.", "success");
         })
         .catch(function (error) {
           setStatus(status, error instanceof Error ? error.message : "Unable to save.", "error");
@@ -1412,20 +1695,25 @@
       fetchStorybooks().catch(function () {
         return [];
       }),
+      fetchLibraryItems().catch(function () {
+        return [];
+      }),
       requestJson("/api/dashboard").catch(function () {
         return null;
       }),
     ]).then(function (results) {
       const health = results[0];
       const storybooks = results[1];
-      const dashboard = results[2];
+      const libraryItems = results[2];
+      const dashboard = results[3];
 
       if (hasPageStoryContext) {
         updateStoryContext(cachedStory, health);
       }
       if (hasLibrarySummary) {
         applyLibrarySummary(storybooks, cachedStory, health);
-        renderLibraryCards(storybooks);
+        applyCreativeLibrarySummary(libraryItems);
+        renderLibraryCards(libraryItems.length ? libraryItems : storybooks);
       }
       if (hasParentSummary) {
         applyParentSummary(storybooks, cachedStory, health, dashboard);
@@ -1436,8 +1724,11 @@
   function init() {
     setupGenerationPage();
     setupGenerationVoiceInput();
+    setupLullabyPage();
+    setupColoringPage();
     setupInputPage();
     setupPersonalizationPage();
+    setupAvatarSpecsPage();
     setupAudioPage();
     setupExperiencePage();
     setupStorybookPage();

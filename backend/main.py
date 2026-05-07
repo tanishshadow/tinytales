@@ -28,11 +28,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
-from story_generator import generate_story
+from story_generator import generate_coloring_scenes, generate_lullaby, generate_story
 from storybook import (
     AudioSettings,
+    AvatarSpecs,
+    ColoringBook,
     ExperienceSettings,
     InputPreferences,
+    Lullaby,
     ParentControls,
     PersonalizationProfile,
     StoryPage,
@@ -85,6 +88,10 @@ class StoryExportResponse(BaseModel):
     title: str
     printable_text: str
     share_url: Optional[str] = None
+
+
+class ColoringPageRequest(BaseModel):
+    storybook_id: str
 
 
 class AuthUser(BaseModel):
@@ -231,6 +238,11 @@ def build_generation_cache_key(
     return hashlib.sha256("||".join(normalized_parts).encode("utf-8")).hexdigest()
 
 
+def resolve_child_name(requested_child_name: str) -> str:
+    saved_profile = store.get_personalization()
+    return saved_profile.child_name or requested_child_name or "the little one"
+
+
 @app.get("/api/auth/google")
 async def start_google_auth(request: Request, mode: str = "login"):
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
@@ -375,6 +387,7 @@ async def create_storybook(
             audio_settings=store.get_audio_settings(),
             experience_settings=store.get_experience_settings(),
             parent_controls=saved_parent_controls.model_copy(update={"language": requested_language}),
+            avatar_specs=store.get_avatar_specs(),
             request_cache_key=request_cache_key,
             generation_source="cache",
         )
@@ -418,11 +431,81 @@ async def create_storybook(
         audio_settings=store.get_audio_settings(),
         experience_settings=store.get_experience_settings(),
         parent_controls=saved_parent_controls.model_copy(update={"language": requested_language}),
+        avatar_specs=store.get_avatar_specs(),
         request_cache_key=request_cache_key,
         generation_source="gemini",
     )
     store.save(book)
     return JSONResponse(content=book.to_dict(), status_code=201)
+
+
+@app.post("/api/generate/lullaby")
+async def create_lullaby(
+    prompt: str = Form(..., description="The child's fear, worry, or story seed"),
+    child_name: Optional[str] = Form("the little one", description="Child's name for personalization"),
+    tone: Optional[str] = Form("gentle", description="Lullaby tone"),
+    language: Optional[str] = Form(None, description="Lullaby language"),
+    line_count: Optional[int] = Form(6, ge=4, le=8, description="Number of lullaby lines"),
+):
+    if not GEMINI_API_KEY:
+        raise HTTPException(503, "Gemini API key is not configured")
+
+    clean_prompt = normalize_cache_text(prompt)
+    if not clean_prompt:
+        raise HTTPException(422, "Prompt cannot be empty")
+
+    saved_parent_controls = store.get_parent_controls()
+    requested_child_name = normalize_cache_text(child_name or "the little one") or "the little one"
+    requested_tone = normalize_cache_text(tone or "gentle").lower() or "gentle"
+    requested_language = normalize_cache_text(language or saved_parent_controls.language or "English") or "English"
+    requested_line_count = line_count or 6
+    resolved_child_name = resolve_child_name(requested_child_name)
+
+    try:
+        lullaby_data = await generate_lullaby(
+            prompt=clean_prompt,
+            child_name=resolved_child_name,
+            tone=requested_tone,
+            line_count=requested_line_count,
+            language=requested_language,
+            gemini_api_key=GEMINI_API_KEY,
+        )
+    except Exception as exc:
+        raise HTTPException(502, f"Lullaby generation failed: {exc}")
+
+    lullaby = Lullaby(**lullaby_data)
+    store.save_lullaby(lullaby)
+    return JSONResponse(content=lullaby.to_dict(), status_code=201)
+
+
+@app.post("/api/generate/coloring-page")
+async def create_coloring_page(payload: ColoringPageRequest):
+    if not GEMINI_API_KEY:
+        raise HTTPException(503, "Gemini API key is not configured")
+
+    book = require_story(payload.storybook_id)
+    if not book.pages:
+        raise HTTPException(422, "Storybook has no pages to turn into coloring scenes")
+
+    try:
+        scenes = await generate_coloring_scenes(
+            title=book.title,
+            child_name=book.child_name,
+            pages=book.pages,
+            gemini_api_key=GEMINI_API_KEY,
+        )
+    except Exception as exc:
+        raise HTTPException(502, f"Coloring page generation failed: {exc}")
+
+    coloring_book = ColoringBook(
+        id=uuid4().hex[:16],
+        title=f"{book.title} Coloring Pages",
+        storybook_id=book.id,
+        child_name=book.child_name,
+        scenes=scenes,
+    )
+    store.save_coloring_book(coloring_book)
+    return JSONResponse(content=coloring_book.to_dict(), status_code=201)
 
 
 @app.get("/api/storybook/{storybook_id}")
@@ -495,6 +578,37 @@ async def list_storybooks():
     return [book.summary_dict() for book in store.list_all()]
 
 
+@app.get("/api/lullabies")
+async def list_lullabies():
+    return [item.summary_dict() for item in store.list_lullabies()]
+
+
+@app.get("/api/lullaby/{lullaby_id}")
+async def get_lullaby(lullaby_id: str):
+    lullaby = store.get_lullaby(lullaby_id)
+    if lullaby is None:
+        raise HTTPException(404, "Lullaby not found")
+    return lullaby.to_dict()
+
+
+@app.get("/api/coloring-books")
+async def list_coloring_books():
+    return [item.summary_dict() for item in store.list_coloring_books()]
+
+
+@app.get("/api/coloring-book/{coloring_book_id}")
+async def get_coloring_book(coloring_book_id: str):
+    coloring_book = store.get_coloring_book(coloring_book_id)
+    if coloring_book is None:
+        raise HTTPException(404, "Coloring book not found")
+    return coloring_book.to_dict()
+
+
+@app.get("/api/library")
+async def list_library_items():
+    return store.list_library_items()
+
+
 @app.get("/api/preferences/input")
 async def get_input_preferences():
     return store.get_input_preferences().model_dump()
@@ -513,6 +627,16 @@ async def get_personalization():
 @app.put("/api/preferences/personalization")
 async def update_personalization(payload: PersonalizationProfile):
     return store.update_personalization(payload).model_dump()
+
+
+@app.get("/api/preferences/avatar-specs")
+async def get_avatar_specs():
+    return store.get_avatar_specs().model_dump()
+
+
+@app.put("/api/preferences/avatar-specs")
+async def update_avatar_specs(payload: AvatarSpecs):
+    return store.update_avatar_specs(payload).model_dump()
 
 
 @app.get("/api/preferences/audio")

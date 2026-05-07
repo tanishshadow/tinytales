@@ -44,7 +44,8 @@ TinyTales is a storybook app for turning a child's fear, worry, or bedtime feeli
 
 - It treats the fear honestly instead of dismissing it.
 - It supports voice-style input and read-aloud playback.
-- It keeps a shared family state for personalization, audio, and reading preferences.
+- It keeps a shared family state for personalization, avatar visuals, audio, and reading preferences.
+- It supports short-form lullabies and interactive coloring books as saved library content.
 - It reuses identical story-generation requests instead of hitting Gemini every time.
 
 ---
@@ -68,6 +69,8 @@ TinyTales is a storybook app for turning a child's fear, worry, or bedtime feeli
         <li>Gemini-generated multi-page stories</li>
         <li>Emotion-aware tone selection</li>
         <li>Child name personalization</li>
+        <li>Saved avatar specs for visual consistency</li>
+        <li>Short rhyming lullaby generation</li>
         <li>Prompt normalization + request caching</li>
       </ul>
     </td>
@@ -79,6 +82,7 @@ TinyTales is a storybook app for turning a child's fear, worry, or bedtime feeli
         <li>Custom animated storybook UI</li>
         <li>Page-flip navigation</li>
         <li>Audio read-aloud controls</li>
+        <li>Tap-to-fill coloring book pages</li>
         <li>Saved experience preferences</li>
       </ul>
     </td>
@@ -101,7 +105,10 @@ TinyTales is a storybook app for turning a child's fear, worry, or bedtime feeli
 | `frontend/index.html` | Landing page and product overview |
 | `frontend/input.html` | Input preferences and voice-focused onboarding |
 | `frontend/generation.html` | Prompt entry and story creation |
+| `frontend/lullaby.html` | Short rhyming lullaby generation and playback |
 | `frontend/personalization.html` | Child profile details |
+| `frontend/avatar.html` | Character creator and avatar sync preferences |
+| `frontend/coloring.html` | Coloring book generation from saved storybooks |
 | `frontend/storybook.html` | Story reading interface |
 | `frontend/audio.html` | Audio settings |
 | `frontend/library.html` | Saved stories and actions |
@@ -225,8 +232,15 @@ location.reload();
 | Method | Route | What it does |
 | --- | --- | --- |
 | `POST` | `/api/generate` | Generate a new storybook or return a cached match |
+| `POST` | `/api/generate/lullaby` | Generate and save a short rhyming lullaby |
+| `POST` | `/api/generate/coloring-page` | Generate and save SVG coloring scenes from a storybook |
 | `GET` | `/api/storybooks` | List saved stories |
 | `GET` | `/api/storybook/{id}` | Fetch one storybook |
+| `GET` | `/api/lullabies` | List saved lullabies |
+| `GET` | `/api/lullaby/{id}` | Fetch one saved lullaby |
+| `GET` | `/api/coloring-books` | List saved coloring books |
+| `GET` | `/api/coloring-book/{id}` | Fetch one saved coloring book |
+| `GET` | `/api/library` | List saved stories, lullabies, and coloring books together |
 | `PATCH` | `/api/storybook/{id}` | Update a saved story |
 | `POST` | `/api/storybook/{id}/favorite` | Toggle favorite state |
 | `POST` | `/api/storybook/{id}/share` | Create a share id |
@@ -242,6 +256,7 @@ location.reload();
 
 - `GET/PUT /api/preferences/input`
 - `GET/PUT /api/preferences/personalization`
+- `GET/PUT /api/preferences/avatar-specs`
 - `GET/PUT /api/preferences/audio`
 - `GET/PUT /api/preferences/experience`
 - `GET/PUT /api/parent-controls`
