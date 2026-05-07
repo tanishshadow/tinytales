@@ -353,10 +353,16 @@
       const personalization = await fetchPreference("/api/preferences/personalization").catch(function () {
         return null;
       });
+      const parentControls = await fetchPreference("/api/parent-controls").catch(function () {
+        return null;
+      });
       if (!String(formData.get("child_name") || "").trim() && personalization && personalization.child_name) {
         formData.set("child_name", personalization.child_name);
       } else if (!String(formData.get("child_name") || "").trim()) {
         formData.set("child_name", "the little one");
+      }
+      if (parentControls && parentControls.language) {
+        formData.set("language", parentControls.language);
       }
     } catch (error) {
       if (!String(formData.get("child_name") || "").trim()) {
@@ -450,6 +456,12 @@
               : parentControls.intensity === "brave"
                 ? "adventurous"
                 : "gentle";
+        }
+      }
+      if (parentControls && parentControls.language) {
+        var languageField = form.elements.namedItem("language");
+        if (languageField) {
+          languageField.value = parentControls.language;
         }
       }
     });

@@ -39,6 +39,10 @@ RULES:
 • Each page needs a "mood" field — a single word describing the emotional
   tone of that page (e.g. "curious", "brave", "cozy", "wondering", "safe").
   The frontend uses this to set background colors and ambient effects.
+• Write the title and every page's story text in {language}. Keep the JSON keys
+  exactly as shown in English.
+• If the language is Bilingual, write each page with simple English followed by
+  the same meaning in the family's selected non-English language when provided.
 
 TONE: {tone}
 
@@ -63,6 +67,7 @@ async def _generate_story_text(
     child_name: str,
     tone: str,
     num_pages: int,
+    language: str,
     gemini_api_key: str,
 ) -> dict[str, Any]:
     """Call Gemini to produce the structured story JSON."""
@@ -73,10 +78,12 @@ async def _generate_story_text(
         child_name=child_name,
         tone=tone,
         num_pages=num_pages,
+        language=language,
     )
 
     user_message = (
         f"The child's name is {child_name}. "
+        f"The reading language is {language}. "
         f"Here is what they shared: \"{prompt}\"\n\n"
         f"Please create a {num_pages}-page storybook."
     )
@@ -117,6 +124,7 @@ async def generate_story(
     child_name: str,
     tone: str,
     num_pages: int,
+    language: str,
     gemini_api_key: str,
 ) -> dict[str, Any]:
     """
@@ -131,6 +139,7 @@ async def generate_story(
         child_name=child_name,
         tone=tone,
         num_pages=num_pages,
+        language=language,
         gemini_api_key=gemini_api_key,
     )
 

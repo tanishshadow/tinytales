@@ -6,6 +6,13 @@
 
   const isTouch = win.matchMedia("(hover: none), (pointer: coarse)").matches;
   const reducedMotion = win.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const interactionTraceEnabled = (() => {
+    try {
+      return win.localStorage.getItem("tinytales-debug-timing") === "true";
+    } catch (error) {
+      return false;
+    }
+  })();
 
   body.classList.toggle("is-touch", isTouch);
   body.classList.toggle("reduced-motion", reducedMotion);
@@ -34,7 +41,8 @@
     weatherMode: "morning",
     geometryCache: new WeakMap(),
     layoutRefreshScheduled: false,
-    interactionTraceEnabled: true,
+    interactionTraceEnabled,
+    effectLastRunAt: Object.create(null),
   };
 
   const siteShell = doc.querySelector(".site-shell");
@@ -129,11 +137,11 @@
     }
 
     return {
-      left: metrics.pageLeft - state.currentScroll,
+      left: metrics.pageLeft - win.scrollX,
       top: metrics.pageTop - state.currentScroll,
       width: metrics.width,
       height: metrics.height,
-      right: metrics.pageRight - state.currentScroll,
+      right: metrics.pageRight - win.scrollX,
       bottom: metrics.pageBottom - state.currentScroll,
       pageLeft: metrics.pageLeft,
       pageTop: metrics.pageTop,
@@ -3250,6 +3258,50 @@
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
+  function getEffectCadence(effectName, activeScroll) {
+    const performanceMode = state.performanceMode || "high";
+
+    if (performanceMode === "low") {
+      if (effectName === "depth") {
+        return 4;
+      }
+      if (effectName === "constellation") {
+        return 3;
+      }
+      return 2;
+    }
+
+    if (performanceMode === "medium") {
+      if (effectName === "depth" || effectName === "constellation") {
+        return activeScroll ? 3 : 2;
+      }
+      if (effectName === "weather") {
+        return activeScroll ? 2 : 1;
+      }
+      return activeScroll ? 2 : 1;
+    }
+
+    if (activeScroll && (effectName === "depth" || effectName === "constellation")) {
+      return 2;
+    }
+
+    return 1;
+  }
+
+  function shouldRunEffect(effectName, activeScroll) {
+    const cadence = getEffectCadence(effectName, activeScroll);
+    return cadence <= 1 || state.frameIndex % cadence === 0;
+  }
+
+  function getEffectDelta(effectName, now, fallbackDelta) {
+    const lastRunAt = state.effectLastRunAt[effectName];
+    state.effectLastRunAt[effectName] = now;
+    if (!lastRunAt) {
+      return fallbackDelta;
+    }
+    return Math.max(fallbackDelta, Math.min(now - lastRunAt, 80));
+  }
+
   function updateViewport() {
     state.viewportWidth = win.innerWidth;
     state.viewportHeight = win.innerHeight;
@@ -5361,12 +5413,12 @@
     }
 
     if (!isTouch && !reducedMotion && siteShell) {
-      const delta = clamp(state.targetScroll - state.currentScroll, -120, 120);
+      const delta = clamp(state.targetScroll - state.currentScroll, -240, 240);
       const sinceWheel = now - (state.lastWheelAt || 0);
       const sinceInput = now - (state.lastScrollInputAt || 0);
       const performanceMode = state.performanceMode || "high";
-      const settleFactor = performanceMode === "low" ? 0.55 : performanceMode === "medium" ? 0.50 : 0.45;
-      const glideFactor = performanceMode === "low" ? 0.38 : performanceMode === "medium" ? 0.34 : 0.28;
+      const settleFactor = performanceMode === "low" ? 0.74 : performanceMode === "medium" ? 0.68 : 0.62;
+      const glideFactor = performanceMode === "low" ? 0.64 : performanceMode === "medium" ? 0.58 : 0.52;
       const easing = sinceWheel < 80 ? glideFactor : settleFactor;
       state.currentScroll += delta * easing;
 
@@ -5387,30 +5439,28 @@
       state.updateCursor();
     }
 
+    const activeScroll =
+      Math.abs(state.targetScroll - state.currentScroll) > 1 ||
+      now - (state.lastWheelAt || 0) < 160 ||
+      now - (state.lastScrollInputAt || 0) < 160;
+
     updateMagnetic();
-    updateConstellation(now);
-    if (state.storyWeather && state.storyWeather.update) {
-      state.storyWeather.update(now, frameDelta || 16.6667);
+    if (shouldRunEffect("constellation", activeScroll)) {
+      updateConstellation(now);
     }
-    if (state.narrativeThread && state.narrativeThread.update) {
+    if (state.storyWeather && state.storyWeather.update && shouldRunEffect("weather", activeScroll)) {
+      state.storyWeather.update(now, getEffectDelta("weather", now, frameDelta || 16.6667));
+    }
+    if (state.narrativeThread && state.narrativeThread.update && shouldRunEffect("thread", activeScroll)) {
       state.narrativeThread.update(now);
     }
     updateParallax(state.currentScroll);
-    updateSVGMorphing(state.currentScroll, now);
-    updateVolumetricDepth(now);
-    if (state.inkSimulation) {
-      try {
-        state.inkSimulation.update(now, frameDelta || 16.6667);
-      } catch (error) {
-        const failedSimulation = state.inkSimulation;
-        if (state.inkSimulation.destroy) {
-          state.inkSimulation.destroy();
-        }
-        state.inkSimulation =
-          failedSimulation === null ? null : createOpaqueInkFallback();
-      }
+    if (shouldRunEffect("svg", activeScroll)) {
+      updateSVGMorphing(state.currentScroll, now);
     }
-
+    if (shouldRunEffect("depth", activeScroll)) {
+      updateVolumetricDepth(now);
+    }
     requestAnimationFrame(animationFrame);
   }
 
@@ -5429,11 +5479,6 @@
     setupGradientMotion();
     setupSectionBleeds();
     setupNarrativeThread();
-    try {
-      state.inkSimulation = createOpaqueInkSimulation();
-    } catch (error) {
-      state.inkSimulation = createOpaqueInkFallback();
-    }
     setupBreathing();
     setupTextReveal();
     setupGlassRefraction();

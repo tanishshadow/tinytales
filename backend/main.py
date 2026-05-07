@@ -218,12 +218,14 @@ def build_generation_cache_key(
     prompt: str,
     child_name: str,
     tone: str,
+    language: str,
     num_pages: int,
 ) -> str:
     normalized_parts = [
         normalize_cache_text(prompt),
         normalize_cache_text(child_name),
         normalize_cache_text(tone).lower(),
+        normalize_cache_text(language).lower(),
         str(int(num_pages)),
     ]
     return hashlib.sha256("||".join(normalized_parts).encode("utf-8")).hexdigest()
@@ -333,6 +335,7 @@ async def create_storybook(
     prompt: str = Form(..., description="The child's fear, worry, or story seed"),
     child_name: Optional[str] = Form("the little one", description="Child's name for personalization"),
     tone: Optional[str] = Form("gentle", description="Story tone: gentle | fun | adventurous"),
+    language: Optional[str] = Form(None, description="Reading language for generated story text"),
     num_pages: Optional[int] = Form(5, ge=3, le=10, description="Number of story pages"),
 ):
     if not GEMINI_API_KEY:
@@ -345,10 +348,13 @@ async def create_storybook(
     requested_child_name = normalize_cache_text(child_name or "the little one") or "the little one"
     requested_tone = normalize_cache_text(tone or "gentle").lower() or "gentle"
     requested_num_pages = num_pages or 5
+    saved_parent_controls = store.get_parent_controls()
+    requested_language = normalize_cache_text(language or saved_parent_controls.language or "English") or "English"
     request_cache_key = build_generation_cache_key(
         prompt=clean_prompt,
         child_name=requested_child_name,
         tone=requested_tone,
+        language=requested_language,
         num_pages=requested_num_pages,
     )
 
@@ -368,7 +374,7 @@ async def create_storybook(
             personalization=saved_profile.model_copy(update={"child_name": resolved_child_name}),
             audio_settings=store.get_audio_settings(),
             experience_settings=store.get_experience_settings(),
-            parent_controls=store.get_parent_controls(),
+            parent_controls=saved_parent_controls.model_copy(update={"language": requested_language}),
             request_cache_key=request_cache_key,
             generation_source="cache",
         )
@@ -381,6 +387,7 @@ async def create_storybook(
             child_name=requested_child_name,
             tone=requested_tone,
             num_pages=requested_num_pages,
+            language=requested_language,
             gemini_api_key=GEMINI_API_KEY,
         )
     except Exception as exc:
@@ -393,6 +400,7 @@ async def create_storybook(
             child_name=storybook_data["child_name"],
             original_prompt=clean_prompt,
             tone=requested_tone,
+            language=requested_language,
             num_pages=requested_num_pages,
             pages=storybook_data["pages"],
         )
@@ -409,7 +417,7 @@ async def create_storybook(
         personalization=saved_profile.model_copy(update={"child_name": resolved_child_name}),
         audio_settings=store.get_audio_settings(),
         experience_settings=store.get_experience_settings(),
-        parent_controls=store.get_parent_controls(),
+        parent_controls=saved_parent_controls.model_copy(update={"language": requested_language}),
         request_cache_key=request_cache_key,
         generation_source="gemini",
     )

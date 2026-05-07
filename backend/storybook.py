@@ -80,6 +80,7 @@ class StoryGenerationCacheEntry(BaseModel):
     child_name: str
     original_prompt: str
     tone: str = "gentle"
+    language: str = "English"
     num_pages: int = 0
     pages: list[StoryPage] = Field(default_factory=list)
     created_at: str = Field(default_factory=utc_now_iso)
