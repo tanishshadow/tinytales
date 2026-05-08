@@ -14,6 +14,7 @@
     }
   })();
   const motionEffectsEnabled = fullMotionEnabled && !reducedMotion && !isTouch;
+  const customCursorEnabled = !isTouch;
   const interactionTraceEnabled = (() => {
     try {
       return win.localStorage.getItem("tinytales-debug-timing") === "true";
@@ -41,6 +42,7 @@
     currentTime: 0,
     performanceMode: "high",
     motionEffectsEnabled,
+    customCursorEnabled,
     frameTimes: [],
     frameTimeTotal: 0,
     frameIndex: 0,
@@ -3427,7 +3429,7 @@
   }
 
   function setupCustomCursor() {
-    if (!state.motionEffectsEnabled) {
+    if (!state.customCursorEnabled) {
       return;
     }
 
@@ -5484,7 +5486,7 @@
     if (shouldRunEffect("depth", activeScroll)) {
       updateVolumetricDepth(now);
     }
-    if (state.motionEffectsEnabled) {
+    if (state.motionEffectsEnabled || state.customCursorEnabled) {
       requestAnimationFrame(animationFrame);
     }
   }
@@ -5512,7 +5514,7 @@
     setupGenerateTrigger();
     updateAnchorScroll();
     scheduleLayoutRefresh();
-    if (state.motionEffectsEnabled) {
+    if (state.motionEffectsEnabled || state.customCursorEnabled) {
       requestAnimationFrame(animationFrame);
     }
   }
