@@ -471,17 +471,45 @@
     const status = document.getElementById("lullaby-generator-status");
     const playButton = document.getElementById("lullaby-play-button");
     const stopButton = document.getElementById("lullaby-stop-button");
+    const recordButton = document.getElementById("lullaby-record-button");
+    const recordStopButton = document.getElementById("lullaby-record-stop-button");
     if (!form || !output || !status) {
       return;
     }
 
     let currentLullaby = null;
+    let voiceRecorder = {
+      recorder: null,
+      stream: null,
+      chunks: [],
+    };
     let playback = {
       context: null,
       nodes: [],
       timers: [],
+      audio: null,
       isPlaying: false,
     };
+
+    function getLullabyVoiceKey(lullaby) {
+      if (!lullaby) {
+        return "";
+      }
+      return "tiny.lullabyVoice." + (lullaby.id || lullaby.title || "draft");
+    }
+
+    function getSavedVoice(lullaby) {
+      const key = getLullabyVoiceKey(lullaby);
+      return key ? window.localStorage.getItem(key) : null;
+    }
+
+    function saveVoice(lullaby, dataUrl) {
+      const key = getLullabyVoiceKey(lullaby);
+      if (!key) {
+        return;
+      }
+      window.localStorage.setItem(key, dataUrl);
+    }
 
     function getAudioContext() {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -498,6 +526,12 @@
       if (stopButton) {
         stopButton.disabled = !isPlaying;
       }
+      if (recordButton) {
+        recordButton.disabled = isPlaying || !currentLullaby || Boolean(voiceRecorder.recorder);
+      }
+      if (recordStopButton) {
+        recordStopButton.disabled = !voiceRecorder.recorder;
+      }
     }
 
     function clearPlayback(message, tone) {
@@ -513,6 +547,10 @@
           return null;
         }
       });
+      if (playback.audio) {
+        playback.audio.pause();
+        playback.audio.currentTime = 0;
+      }
       if (playback.context && playback.context.state !== "closed") {
         playback.context.close().catch(function () {
           return null;
@@ -522,6 +560,7 @@
         context: null,
         nodes: [],
         timers: [],
+        audio: null,
         isPlaying: false,
       };
       output.querySelectorAll(".lullaby-lines p").forEach(function (line) {
@@ -593,6 +632,21 @@
       ];
       const lineDuration = 3.2;
       const startAt = context.currentTime + 0.12;
+      const savedVoice = getSavedVoice(lullaby);
+
+      if (savedVoice) {
+        const voiceAudio = new Audio(savedVoice);
+        voiceAudio.volume = 0.92;
+        voiceAudio.onended = function () {
+          if (playback.isPlaying) {
+            setStatus(status, "Voice narration finished. Music is fading out.", "success");
+          }
+        };
+        playback.audio = voiceAudio;
+        voiceAudio.play().catch(function () {
+          setStatus(status, "Tap play again if the browser blocked the voice recording.", "idle");
+        });
+      }
 
       lines.forEach(function (line, index) {
         const lineStart = startAt + index * lineDuration;
@@ -629,7 +683,23 @@
         clearPlayback("Lullaby audio finished.", "success");
       }, (lines.length * lineDuration + 1.4) * 1000));
 
-      setStatus(status, "Playing soft melody and background music.", "loading");
+      setStatus(
+        status,
+        savedVoice
+          ? "Playing recorded voice narration with soft background music."
+          : "Playing soft melody and background music.",
+        "loading"
+      );
+    }
+
+    function refreshVoiceState() {
+      const voiceStatus = document.getElementById("lullaby-voice-status");
+      if (!voiceStatus) {
+        return;
+      }
+      voiceStatus.textContent = getSavedVoice(currentLullaby)
+        ? "Voice narration saved for this lullaby."
+        : "Record a parent voice take to add natural narration.";
     }
 
     function renderLullaby(lullaby) {
@@ -644,6 +714,7 @@
         '<p class="eyebrow">saved lullaby</p>',
         '<h3>' + escapeHtml(lullaby.title || "A Little Brave Lullaby") + "</h3>",
         '<p class="lullaby-melody">Instrumental mood: ' + escapeHtml(lullaby.melody || "moonlight") + "</p>",
+        '<p class="lullaby-voice-status" id="lullaby-voice-status"></p>',
         '<div class="lullaby-lines">',
         (lullaby.lines || []).map(function (line, index) {
           return '<p data-line-index="' + index + '">' + escapeHtml(line) + "</p>";
@@ -655,6 +726,7 @@
         playButton.disabled = false;
       }
       setPlaybackButtons(false);
+      refreshVoiceState();
     }
 
     function playLullaby() {
@@ -686,6 +758,67 @@
     if (stopButton) {
       stopButton.addEventListener("click", function () {
         clearPlayback("Lullaby audio stopped.", "idle");
+      });
+    }
+    if (recordButton) {
+      recordButton.addEventListener("click", function () {
+        if (!currentLullaby) {
+          setStatus(status, "Generate or open a lullaby before recording voice.", "idle");
+          return;
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof window.MediaRecorder !== "function") {
+          setStatus(status, "Voice recording needs microphone support in this browser.", "error");
+          return;
+        }
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(function (stream) {
+            const recorder = new window.MediaRecorder(stream);
+            voiceRecorder = {
+              recorder: recorder,
+              stream: stream,
+              chunks: [],
+            };
+            recorder.ondataavailable = function (event) {
+              if (event.data && event.data.size) {
+                voiceRecorder.chunks.push(event.data);
+              }
+            };
+            recorder.onstop = function () {
+              const blob = new Blob(voiceRecorder.chunks, {
+                type: recorder.mimeType || "audio/webm",
+              });
+              const reader = new FileReader();
+              reader.onload = function () {
+                saveVoice(currentLullaby, String(reader.result || ""));
+                voiceRecorder.stream.getTracks().forEach(function (track) {
+                  track.stop();
+                });
+                voiceRecorder = {
+                  recorder: null,
+                  stream: null,
+                  chunks: [],
+                };
+                setPlaybackButtons(false);
+                refreshVoiceState();
+                setStatus(status, "Voice narration saved. Play will mix it with the lullaby music.", "success");
+              };
+              reader.readAsDataURL(blob);
+            };
+            recorder.start();
+            setPlaybackButtons(false);
+            setStatus(status, "Recording voice narration now.", "loading");
+          })
+          .catch(function (error) {
+            setStatus(status, error instanceof Error ? error.message : "Microphone permission was not granted.", "error");
+          });
+      });
+    }
+    if (recordStopButton) {
+      recordStopButton.addEventListener("click", function () {
+        if (voiceRecorder.recorder && voiceRecorder.recorder.state !== "inactive") {
+          voiceRecorder.recorder.stop();
+          setStatus(status, "Saving voice narration...", "loading");
+        }
       });
     }
 

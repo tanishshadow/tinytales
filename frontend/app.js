@@ -6,6 +6,14 @@
 
   const isTouch = win.matchMedia("(hover: none), (pointer: coarse)").matches;
   const reducedMotion = win.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fullMotionEnabled = (() => {
+    try {
+      return win.localStorage.getItem("tinytales-motion") === "full";
+    } catch (error) {
+      return false;
+    }
+  })();
+  const motionEffectsEnabled = fullMotionEnabled && !reducedMotion && !isTouch;
   const interactionTraceEnabled = (() => {
     try {
       return win.localStorage.getItem("tinytales-debug-timing") === "true";
@@ -16,6 +24,7 @@
 
   body.classList.toggle("is-touch", isTouch);
   body.classList.toggle("reduced-motion", reducedMotion);
+  body.classList.toggle("motion-lite", !motionEffectsEnabled);
 
   const state = {
     viewportWidth: win.innerWidth,
@@ -31,6 +40,7 @@
     ticking: false,
     currentTime: 0,
     performanceMode: "high",
+    motionEffectsEnabled,
     frameTimes: [],
     frameTimeTotal: 0,
     frameIndex: 0,
@@ -518,7 +528,7 @@
   }
 
   function setupSVGMorphing() {
-    if (reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -616,7 +626,7 @@
   }
 
   function updateSVGMorphing(scrollValue, now) {
-    if (reducedMotion || !morphTargets.length) {
+    if (!state.motionEffectsEnabled || !morphTargets.length) {
       return;
     }
 
@@ -739,7 +749,7 @@
   }
 
   function setupConstellation() {
-    if (reducedMotion || state.constellation) {
+    if (!state.motionEffectsEnabled || state.constellation) {
       return;
     }
 
@@ -1215,7 +1225,7 @@
   }
 
   function setupVolumetricDepth() {
-    if (reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -1312,7 +1322,7 @@
   }
 
   function updateVolumetricDepth(now) {
-    if (!state.depthScene || reducedMotion) {
+    if (!state.depthScene || !state.motionEffectsEnabled) {
       return;
     }
 
@@ -3327,7 +3337,7 @@
       return;
     }
 
-    if (!isTouch && !reducedMotion) {
+    if (state.motionEffectsEnabled) {
       const height = siteShell.getBoundingClientRect().height;
       body.style.height = `${Math.ceil(height)}px`;
       state.maxScroll = Math.max(0, height - state.viewportHeight);
@@ -3343,7 +3353,16 @@
   }
 
   function setupSmoothScroll() {
-    if (!siteShell || isTouch || reducedMotion) {
+    if (!siteShell) {
+      return;
+    }
+
+    if (!state.motionEffectsEnabled) {
+      win.addEventListener("scroll", () => {
+        state.currentScroll = win.scrollY;
+        state.targetScroll = state.currentScroll;
+      }, { passive: true });
+      win.addEventListener("resize", debounce(updateViewport, 120));
       return;
     }
 
@@ -3408,7 +3427,7 @@
   }
 
   function setupCustomCursor() {
-    if (isTouch || reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -3465,7 +3484,7 @@
   }
 
   function setupMagneticHover() {
-    if (isTouch || reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -3556,6 +3575,10 @@
   }
 
   function setupButtonMicroInteractions() {
+    if (!state.motionEffectsEnabled) {
+      return;
+    }
+
     doc.querySelectorAll(".button").forEach((button) => {
       if (!(button instanceof HTMLElement)) {
         return;
@@ -3586,7 +3609,7 @@
   }
 
   function setupParallax() {
-    if (reducedMotion || isTouch) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -3633,7 +3656,7 @@
   }
 
   function updateParallax(scrollValue) {
-    if (reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -3665,7 +3688,7 @@
   }
 
   function setupSectionBleeds() {
-    if (reducedMotion || !siteShell) {
+    if (!state.motionEffectsEnabled || !siteShell) {
       return;
     }
 
@@ -4274,7 +4297,7 @@
   }
 
   function setupNarrativeThread() {
-    if (!siteShell) {
+    if (!state.motionEffectsEnabled || !siteShell) {
       return;
     }
 
@@ -4686,7 +4709,7 @@
   }
 
   function setupGradientMotion() {
-    if (reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -4694,7 +4717,7 @@
   }
 
   function setupStoryWeather() {
-    if (reducedMotion || state.storyWeather) {
+    if (!state.motionEffectsEnabled || state.storyWeather) {
       return;
     }
 
@@ -5052,7 +5075,7 @@
   }
 
   function setupBreathing() {
-    if (reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -5097,7 +5120,7 @@
   }
 
   function setupTextReveal() {
-    if (reducedMotion) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -5121,7 +5144,7 @@
   }
 
   function setupGlassRefraction() {
-    if (reducedMotion || isTouch) {
+    if (!state.motionEffectsEnabled) {
       return;
     }
 
@@ -5250,7 +5273,7 @@
   }
 
   function runParticleMorph(trigger, destination) {
-    if (reducedMotion || isTouch) {
+    if (!state.motionEffectsEnabled) {
       win.location.href = destination;
       return;
     }
@@ -5367,7 +5390,7 @@
           return;
         }
 
-        if (!isTouch && !reducedMotion) {
+        if (state.motionEffectsEnabled) {
           event.preventDefault();
           traceInteraction("interaction:anchor-click", () => {
             deferTask(() => {
@@ -5412,7 +5435,7 @@
       state.performanceMode = "high";
     }
 
-    if (!isTouch && !reducedMotion && siteShell) {
+    if (state.motionEffectsEnabled && siteShell) {
       const delta = clamp(state.targetScroll - state.currentScroll, -240, 240);
       const sinceWheel = now - (state.lastWheelAt || 0);
       const sinceInput = now - (state.lastScrollInputAt || 0);
@@ -5461,7 +5484,9 @@
     if (shouldRunEffect("depth", activeScroll)) {
       updateVolumetricDepth(now);
     }
-    requestAnimationFrame(animationFrame);
+    if (state.motionEffectsEnabled) {
+      requestAnimationFrame(animationFrame);
+    }
   }
 
   function init() {
@@ -5487,7 +5512,9 @@
     setupGenerateTrigger();
     updateAnchorScroll();
     scheduleLayoutRefresh();
-    requestAnimationFrame(animationFrame);
+    if (state.motionEffectsEnabled) {
+      requestAnimationFrame(animationFrame);
+    }
   }
 
   if (doc.readyState === "loading") {

@@ -876,6 +876,12 @@ h3 {
   font-size: 13px;
 }
 
+.lullaby-voice-status {
+  margin: -6px 0 8px;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
 .lullaby-lines p {
   margin: 0;
   color: var(--fg-muted);
@@ -1579,6 +1585,30 @@ body.reduced-motion .flip-ghost,
 body.reduced-motion .particle-canvas {
   animation: none !important;
   transition: none !important;
+}
+
+body.motion-lite .ambient-breathe,
+body.motion-lite .orb-one,
+body.motion-lite .thread-knot,
+body.motion-lite .micro-button,
+body.motion-lite .button-ripple,
+body.motion-lite .flip-ghost,
+body.motion-lite .particle-canvas {
+  animation: none !important;
+  transition: none !important;
+}
+
+body.motion-lite .cursor-shell,
+body.motion-lite .weather-canvas,
+body.motion-lite .constellation-field,
+body.motion-lite .depth-atmosphere,
+body.motion-lite .section-bleeds,
+body.motion-lite .narrative-thread {
+  display: none !important;
+}
+
+body.motion-lite.has-gradient-motion::before {
+  display: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
